@@ -98,49 +98,50 @@ E 			: E '+' E
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
 
 			}
+			| DECLARACAO
+			{
+				$$.traducao = $1.traducao;
+			}
 			| TK_NUM
 			{
 				string var = addNewVar();
 
 				$$.traducao = "\t"+ var + " = "+ $1.label + ";\n";
 
-				$$.label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
+				$$.label = var;
 			}
 			
-			|DECLARACAO TK_ID
+			// ###### Declaração de tipos ########################
+			
+		
+			// ###### ########################
+			
+			| TK_ID
 			{
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
 
-				//Lembrar que o $2.label não deve ficar aqui, ele deve ser armazenado na tabela;
-				$$.traducao = "\t"+ $1.traducao + var + " = "+ $2.label + ";\n";
+				$$.traducao = "\t"+ var + " = "+ $1.label + ";\n";
 
 				$$.label = var;
 			}
 			;
 			
-
-//Declaração de tipos
-			
-DECLARACAO	: TK_TIPO_INT{
+DECLARACAO	: TK_TIPO_INT TK_ID{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "int "; //retorna int na recursão
+				//$$.traducao = "IntFFFFFFFF";
 			}
 			| TK_TIPO_BOOL{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "bool "; //retorna bool na recursão
+				$$.traducao = "BoolFFFFFF";
 			}
 			| TK_TIPO_FLOAT{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "float "; //retorna float na recursão
+				$$.traducao = "FloatFFFFFFFFF";
 			}
 			| TK_TIPO_CHAR{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "char "; //retorna char na recursão
-			}
-			|
-			{
-				// Para retornar vazio, pois a variavel pode ser usada sem declarar o tipo pois ele já pode ter sido declarado.
+				$$.traducao = "CHARFFFFFF";
 			}
 			;
 
