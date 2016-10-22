@@ -1,5 +1,9 @@
 %{
+#include <stdio.h>
+#include <stdlib.h>
+#include <map>
 #include <iostream>
+#include <cassert>
 #include <string>
 #include <sstream>
 
@@ -11,12 +15,27 @@ int varCount=0;
 
 string to_string(int i);
 string addNewVar();
+void addNewVarToTable(string type, string name, string varTemp);
 
 struct atributos
 {
 	string label;
 	string traducao;
 };
+class VarNode{
+	public: 
+		string name;
+		string type;
+		VarNode(string , string);
+};
+VarNode::VarNode(string a, string b){
+	name = a;
+	type = b;
+};
+
+VarNode* getVar(string name);
+
+map<string, VarNode*> varTable;
 
 int yylex(void);
 void yyerror(string);
@@ -94,7 +113,8 @@ E 			: E '+' E
 			}
 			| E '=' E
 			{	
-				string var = addNewVar();
+
+				//string var = addNewVar();
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
 
 			}
@@ -112,16 +132,21 @@ E 			: E '+' E
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
 
-				//Lembrar que o $2.label não deve ficar aqui, ele deve ser armazenado na tabela;
-				$$.traducao = "\t"+ $1.traducao + var + " = "+ $2.label + ";\n";
+				$$.traducao = "\t"+ $1.traducao + var + "  ;\n";
 
+				//insere variavel na tabela
+				addNewVarToTable( $2.label, var, $1.traducao);
 				$$.label = var;
+			}
+			|TK_ID
+			{	
+				//busca na tabela de variáveis, o nome da váriavel 
+				$$.label =  getVar($1.label)->name;
 			}
 			;
 			
 
 //Declaração de tipos
-			
 DECLARACAO	: TK_TIPO_INT{
 				//Criar tabela para guardar tipo 
 				$$.traducao = "int "; //retorna int na recursão
@@ -138,10 +163,6 @@ DECLARACAO	: TK_TIPO_INT{
 				//Criar tabela para guardar tipo 
 				$$.traducao = "char "; //retorna char na recursão
 			}
-			|
-			{
-				// Para retornar vazio, pois a variavel pode ser usada sem declarar o tipo pois ele já pode ter sido declarado.
-			}
 			;
 
 %%
@@ -151,8 +172,12 @@ DECLARACAO	: TK_TIPO_INT{
 int yyparse();
 
 int main( int argc, char* argv[] )
-{
+{	
+	cout<<"\nSTART\n";
 	yyparse();
+cout<<"\n\n::::\n";
+	for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
+    cout << it->first << " => " << it->second->name << '\n';
 
 	return 0;
 }
@@ -173,4 +198,16 @@ std::string to_string(int i)
 string addNewVar(){
 
 	return ("var" + to_string(varCount++)); 
+}
+void addNewVarToTable(string name, string varTemp, string type){
+	//verifica se a nova variavel está na tabela
+	if(varTable.find(name)!=varTable.end()){
+		cout<<"ERRO: "<<name<< " already exists!!\n";
+	}else{
+		varTable[name] = new VarNode(varTemp, type);
+	}
+}
+VarNode* getVar(string name){
+	//cout<<varTable[name]->name<<" getVar\n";
+	return varTable[name]; 
 }
