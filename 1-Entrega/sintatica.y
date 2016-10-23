@@ -15,22 +15,25 @@ int varCount=0;
 
 string to_string(int i);
 string addNewVar();
-void addNewVarToTable(string type, string name, string varTemp);
+void addNewVarToTable(string tipo, string name, string varTemp);
 
 struct atributos
 {
 	string label;
 	string traducao;
+	string tipo;
 };
+
 class VarNode{
 	public: 
 		string name;
-		string type;
+		string tipo;
 		VarNode(string , string);
 };
+
 VarNode::VarNode(string a, string b){
 	name = a;
-	type = b;
+	tipo = b;
 };
 
 VarNode* getVar(string name);
@@ -41,7 +44,7 @@ int yylex(void);
 void yyerror(string);
 %}
 
-%token TK_NUM
+%token TK_NUM TK_CHAR TK_REAL
 %token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL
 %token TK_FIM TK_ERROR
 
@@ -79,7 +82,7 @@ E 			: E '+' E
 			{
 				string var = addNewVar();
 
-				$$.traducao = $1.traducao + $3.traducao + "\t" + var + " = " + $1.label + " + " + $3.label  +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " + " + $3.label  +";\n";
 
 				$$.label = var;
 
@@ -88,7 +91,7 @@ E 			: E '+' E
 			{
 				string var = addNewVar();
 
-				$$.traducao = $1.traducao + $3.traducao + "\t" + var + " = " + $1.label + " - " + $3.label  +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " - " + $3.label  +";\n";
 
 				$$.label = var;
 
@@ -97,7 +100,7 @@ E 			: E '+' E
 			{
 				string var = addNewVar();
 
-				$$.traducao = $1.traducao + $3.traducao + "\t" + var + " = " + $1.label + " * " + $3.label  +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " * " + $3.label  +";\n";
 
 				$$.label = var;
 
@@ -106,19 +109,34 @@ E 			: E '+' E
 			{
 				string var = addNewVar();
 
-				$$.traducao = $1.traducao + $3.traducao + "\t" + var + " = " + $1.label + " / " + $3.label  +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " / " + $3.label  +";\n";
 
 				$$.label = var;
 
 			}
 			| E '=' E
 			{	
-
 				//string var = addNewVar();
-				$$.traducao = $1.traducao + $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ $1.label + " = " + $3.label + ";\n";
 
 			}
 			| TK_NUM
+			{
+				string var = addNewVar();
+
+				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
+
+				$$.label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
+			}
+			| TK_CHAR
+			{
+				string var = addNewVar();
+
+				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
+
+				$$.label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
+			}
+			| TK_REAL
 			{
 				string var = addNewVar();
 
@@ -132,11 +150,12 @@ E 			: E '+' E
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
 
-				$$.traducao = "\t"+ $1.traducao + var + "  ;\n";
+				$$.traducao = "\t"+ $1.traducao + var + ";\n";
 
 				//insere variavel na tabela
 				addNewVarToTable( $2.label, var, $1.traducao);
 				$$.label = var;
+				$$.tipo = $1.traducao;
 			}
 			|TK_ID
 			{	
@@ -173,11 +192,10 @@ int yyparse();
 
 int main( int argc, char* argv[] )
 {	
-	cout<<"\nSTART\n";
 	yyparse();
-cout<<"\n\n::::\n";
-	for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
-    cout << it->first << " => " << it->second->name << '\n';
+	//cout<<"\n\n::::\n";
+	//for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
+    //cout << it->first << " => " << it->second->name << '\n';
 
 	return 0;
 }
@@ -199,12 +217,12 @@ string addNewVar(){
 
 	return ("var" + to_string(varCount++)); 
 }
-void addNewVarToTable(string name, string varTemp, string type){
+void addNewVarToTable(string name, string varTemp, string tipo){
 	//verifica se a nova variavel está na tabela
 	if(varTable.find(name)!=varTable.end()){
-		cout<<"ERRO: "<<name<< " already exists!!\n";
+		cout<<"error: redeclaration of '"<<tipo<<" "<<name<< "'\n";
 	}else{
-		varTable[name] = new VarNode(varTemp, type);
+		varTable[name] = new VarNode(varTemp, tipo);
 	}
 }
 VarNode* getVar(string name){
