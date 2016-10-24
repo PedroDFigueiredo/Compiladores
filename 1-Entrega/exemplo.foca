@@ -1,6 +1,7 @@
 int main()
 {
-	float x = 10;
-	x = 2 + 3 / 5;
-	
+	int x = 10 + 5 + 2.0;
+	int j = 5;
+	int z;
+	z = x + j;
 }
