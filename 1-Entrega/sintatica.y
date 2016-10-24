@@ -16,29 +16,29 @@ int varCount=0;
 void criaTabelaTipos();
 string to_string(int i);
 string addNewVar();
-void addNewVarToTable(string tipo, string name, string varTemp);
+void addNewVarToTable(string tipo, string nomeTemp, string varTemp);
 
 struct atributos
 {
 	string label;
 	string traducao;
 	string tipo;
-	string teste;
+	string nomeTemp;
 };
 
 class VarNode{
 	public: 
-		string name; //Tipo de var Var0, Var2;
+		string nomeTemp; //Tipo de var Var0, Var2;
 		string tipo;
 		VarNode(string , string);
 };
 
 VarNode::VarNode(string a, string b){
-	name = a;
+	nomeTemp = a;
 	tipo = b;
 };
 
-VarNode* getVar(string name);
+VarNode* getVar(string nomeTemp);
 
 map<string, VarNode*> varTable;
 
@@ -99,24 +99,9 @@ E 			: E '+' E
 			{
 				string var = addNewVar();
 				
-				if(getVar($3.teste)){ //Se o getVar não existe ele retorna 0 e não entra no IF!!!
-					//cout <<getVar($1.teste)->tipo <<  ": " <<getVar($3.teste)->tipo;
-					$1.tipo = verificaTipo(getVar($1.teste)->tipo , "+", getVar($3.teste)->tipo);
-					cout << verificaTipo(getVar($1.teste)->tipo , "+", getVar($3.teste)->tipo); 
-				}else{
-					//$1.tipo = verificaTipo($1.teste , "+", getVar($3.teste)->tipo);
-					cout <<"else "<< $1.traducao , "+", $3.traducao; 
-				}
-				
+				$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
+				cout<<$1.tipo<<"++\n";
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " + " + $3.label  +";\n";
-				//cout <<$2.traducao<<":"<<getVar($2.label)->tipo <<":"<< $3.traducao ;
-				
-				
-				
-				
-				//cout << verificaTipo( getVar($1.label)->tipo, " + ", getVar($3.label)->tipo );
-				//cout << ":teste\n";
-				//criaTabelaTipos() $1.label + " + " + $3.label
 
 				$$.label = var;
 
@@ -150,6 +135,7 @@ E 			: E '+' E
 			}
 			| E '=' E
 			{	
+				$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
 				//string var = addNewVar();
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ $1.label + " = " + $3.label + ";\n";
 
@@ -157,6 +143,7 @@ E 			: E '+' E
 			| TK_NUM
 			{
 				string var = addNewVar();
+				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<"\n;";
 
 				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
 
@@ -165,6 +152,7 @@ E 			: E '+' E
 			| TK_CHAR
 			{
 				string var = addNewVar();
+				//cout<<"HAR "<<$1.tipo<<" "<<$1.label<<"\n;";
 
 				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
 
@@ -173,6 +161,7 @@ E 			: E '+' E
 			| TK_REAL
 			{
 				string var = addNewVar();
+				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<"\n;";
 
 				$$.traducao = "\t"+$1.tipo+ " " + var + " = "+ $1.label + ";\n";
 
@@ -193,9 +182,16 @@ E 			: E '+' E
 			}
 			|TK_ID
 			{	
+
+				cout <<"$1.traducao"<<":"<<$1.label<<":"<<$1.tipo<<":"<<$1.nomeTemp<<":\n";
+				//cout <<"$2.traducao"<<":"<<$2.label<<":"<<$2.tipo<<":"<<$2.nomeTemp<<":\n";
+				//cout <<"$3.traducao"<<":"<<$3.label<<":"<<$3.tipo<<":"<<$3.nomeTemp<<":\n";
+				
+				//cout<<verificaTipo($1.tipo, "+", $3.tipo)<<"::";
 				//busca na tabela de variáveis, o nome da váriavel 
-				$$.label =  getVar($1.label)->name;
-				$$.teste =  $1.label;
+				$$.label =  getVar($1.label)->nomeTemp;
+				$$.tipo = getVar($1.label)->tipo;
+				$$.nomeTemp =  $1.label;
 			}
 			;
 			
@@ -207,15 +203,15 @@ DECLARACAO	: TK_TIPO_INT{
 			}
 			| TK_TIPO_BOOL{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "bool "; //retorna bool na recursão
+				$$.traducao = "bool"; //retorna bool na recursão
 			}
 			| TK_TIPO_FLOAT{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "float "; //retorna float na recursão
+				$$.traducao = "float"; //retorna float na recursão
 			}
 			| TK_TIPO_CHAR{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "char "; //retorna char na recursão
+				$$.traducao = "char"; //retorna char na recursão
 			}
 			;
 
@@ -230,7 +226,7 @@ int main( int argc, char* argv[] )
 	yyparse();
 	//cout<<"\n\n::::\n";
 	//for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
-    //cout << it->first << " => " << it->second->name << '\n';
+    //cout << it->first << " => " << it->second->nomeTemp << '\n';
 
 	return 0;
 }
@@ -252,17 +248,17 @@ string addNewVar(){
 
 	return ("var" + to_string(varCount++)); 
 }
-void addNewVarToTable(string name, string varTemp, string tipo){
+void addNewVarToTable(string nomeTemp, string varTemp, string tipo){
 	//verifica se a nova variavel está na tabela
-	if(varTable.find(name)!=varTable.end()){
-		cout<<"error: redeclaration of '"<<tipo<<" "<<name<< "'\n";
+	if(varTable.find(nomeTemp)!=varTable.end()){
+		cout<<"error: redeclaration of '"<<tipo<<" "<<nomeTemp<< "'\n";
 	}else{
-		varTable[name] = new VarNode(varTemp, tipo);
+		varTable[nomeTemp] = new VarNode(varTemp, tipo);
 	}
 }
-VarNode* getVar(string name){
-	//cout<<varTable[name]->name<<" getVar\n";
-	return varTable[name]; 
+VarNode* getVar(string nomeTemp){
+	//cout<<varTable[nomeTemp]->nomeTemp<<" getVar\n";
+	return varTable[nomeTemp]; 
 }
 void criaTabelaTipos(){	
 	 //Tabela de Operação para soma
