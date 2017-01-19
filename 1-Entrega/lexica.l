@@ -20,7 +20,6 @@ FLOAT {SINAL}{REAL}
 
 
 
-
 %%
 
 "\n"		{}
@@ -35,8 +34,30 @@ FLOAT {SINAL}{REAL}
 "char"      {return TK_TIPO_CHAR;}
 "bool"      {return TK_TIPO_BOOL;}
 
+-------PalavrasReservadas
+"true" 					{yylval.label = yytext; return TK_TRUE;}
+"false" 				{yylval.label = yytext; return TK_FALSE;}
+
+
+--------------------OPERADORES
+--------Logicos
+"||"					{yylval.label = yytext; return TK_OPER_OR;}
+"&&"					{yylval.label = yytext; return TK_OPER_AND;}
+"!"					{yylval.label = yytext; return TK_OPER_NOT;}
+
+--------Relacionais
+">"     {yylval.label = yytext; return TK_OPER_MAIOR;}
+">="    {yylval.label = yytext; return TK_OPER_MAIOR_IGUAL;}
+"<"     {yylval.label = yytext; return TK_OPER_MENOR;}
+"<="    {yylval.label = yytext; return TK_OPER_MENOR_IGUAL;}
+"=="    {yylval.label = yytext; return TK_OPER_IGUAL;}
+"!="    {yylval.label = yytext; return TK_OPER_DIFERENTE;}
+--------------------FIMOPEADORES----------
+
 
 [(){}[\];,]	{ return *yytext; }
+
+[>]
 
 [+\-*/]		{ yylval.operador = yytext;   return OPERADOR; }
 [=]         { return *yytext; }
