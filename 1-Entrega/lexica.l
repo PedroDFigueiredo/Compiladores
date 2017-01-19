@@ -57,7 +57,7 @@ FLOAT {SINAL}{REAL}
 
 [(){}[\];,]	{ return *yytext; }
 
-[>]
+
 
 [+\-*/]		{ yylval.operador = yytext;   return OPERADOR; }
 [=]         { return *yytext; }
@@ -65,7 +65,7 @@ FLOAT {SINAL}{REAL}
 
 
 {INT}		{ yylval.label = yytext;  yylval.tipo = "int"; return TK_INT; }
-{FLOAT}		{ yylval.label = yytext;  yylval.tipo = "float"; return TK_REAL; }
+{FLOAT}		{ yylval.label = yytext;  yylval.tipo = "float"; return TK_FLOAT; }
 {CHAR}		{ yylval.label = yytext;  yylval.tipo = "char"; return TK_CHAR; }
 {ID}		{ yylval.label = yytext;  return TK_ID; }
 

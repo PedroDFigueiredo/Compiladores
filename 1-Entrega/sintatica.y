@@ -54,7 +54,7 @@ int yylex(void);
 void yyerror(string);
 %}
 
-%token TK_INT TK_CHAR TK_REAL
+%token TK_INT TK_CHAR TK_FLOAT
 %token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL
 %token TK_FIM TK_ERROR
 %token OPERADOR 
@@ -139,7 +139,7 @@ E 			: E OPERADOR E
 
 				$$.label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
 			}
-			| TK_REAL
+			| TK_FLOAT
 			{
 				string var = addNewVar();
 				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<";\n";
