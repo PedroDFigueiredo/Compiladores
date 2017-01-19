@@ -54,7 +54,7 @@ int yylex(void);
 void yyerror(string);
 %}
 
-%token TK_NUM TK_CHAR TK_REAL
+%token TK_INT TK_CHAR TK_REAL
 %token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL
 %token TK_FIM TK_ERROR
 %token OPERADOR 
@@ -118,7 +118,7 @@ E 			: E OPERADOR E
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ $1.label + " = " + cast+" "+ $3.label + ";\n";
 
 			}
-			| TK_NUM
+			| TK_INT
 			{
 				string var = addNewVar();
 				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<";\n";
