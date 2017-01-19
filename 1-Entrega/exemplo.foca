@@ -1,5 +1,20 @@
 int main()
 {
-	int x = 10;
-	x = x + 'a' + 2 / 2;
+	int x = 1.0 * 50 + 20;
+	
+
+
+
+
+
+	float j = 5;
+
+
+	int z;
+	z = x + j;
+
+
+	j = x + j;
 }
+
+

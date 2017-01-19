@@ -17,6 +17,7 @@ void criaTabelaTipos();
 string to_string(int i);
 string addNewVar();
 void addNewVarToTable(string tipo, string nomeTemp, string varTemp);
+string verificaTipo(string tipoA, string operador, string tipoB);
 
 struct atributos
 {
@@ -44,17 +45,7 @@ map<string, VarNode*> varTable;
 
 map<string, string> TabelaTipos;
 
-string verificaTipo(string tipoA, string operador, string tipoB){
-	if(TabelaTipos.empty()){
-		criaTabelaTipos();
-	}
-	string busca = tipoA+operador+tipoB;
-	string retorno  =TabelaTipos.find(busca)->second;
-	//cout << busca<<"verficabusca\n";
-	
-	//TabelaTipos[busca]
-	return retorno;
-}
+string decl = "";
 
 
 int yylex(void);
@@ -75,7 +66,7 @@ void yyerror(string);
 
 S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			{
-				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << $5.traducao << "\treturn 0;\n}" << endl; 
+				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" <<decl<< $5.traducao << "\treturn 0;\n}" << endl; 
 			}
 			;
 
@@ -97,53 +88,95 @@ COMANDO 	: E ';'
 
 E 			: E '+' E
 			{
-				string var = addNewVar();
+				string var = addNewVar(), cast1 = "", cast3 = "";
+				string tipo = verificaTipo($1.tipo, "+", $3.tipo);
+				if($1.tipo != $3.tipo){
+					if(tipo != $1.tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != $3.tipo)
+						cast3 = "("+tipo+") ";
+				}
 				
-				$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
-				cout<<$1.tipo<<"++\n";
-				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " + " + $3.label  +";\n";
+				$1.tipo = tipo;
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + cast1 + $1.label + " + " + cast3 + $3.label  +";\n";
 
 				$$.label = var;
-
+				$$.tipo = tipo;
 			}
 			| E '-' E
 			{
-				string var = addNewVar();
-
+				string var = addNewVar(), cast1 = "", cast3 = "";
+				string tipo = verificaTipo($1.tipo, "-", $3.tipo);
+				if($1.tipo != $3.tipo){
+					if(tipo != $1.tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != $3.tipo)
+						cast3 = "("+tipo+") ";
+				}
+				
+				$1.tipo = verificaTipo($1.tipo, "-", $3.tipo);
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " - " + $3.label  +";\n";
 
 				$$.label = var;
+				$$.tipo = tipo;
+
 
 			}
 			| E '*' E
 			{
-				string var = addNewVar();
+				string var = addNewVar(), cast1 = "", cast3 = "";
 
+				string tipo = verificaTipo($1.tipo, "*", $3.tipo);
+				if($1.tipo != $3.tipo){
+					if(tipo != $1.tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != $3.tipo)
+						cast3 = "("+tipo+") ";
+				}
+				
+				$1.tipo = tipo;
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " * " + $3.label  +";\n";
 
 				$$.label = var;
+				$$.tipo = tipo;
+
 
 			}
 			| E '/' E
 			{
-				string var = addNewVar();
+				string var = addNewVar(), cast1 = "", cast3 = "";
 
+				string tipo = verificaTipo($1.tipo, "/", $3.tipo);
+				if($1.tipo != $3.tipo){
+					if(tipo != $1.tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != $3.tipo)
+						cast3 = "("+tipo+") ";
+				}
+				
+				$1.tipo = tipo;
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " / " + $3.label  +";\n";
 
 				$$.label = var;
+				$$.tipo = tipo;
+
 
 			}
 			| E '=' E
 			{	
-				$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
+				//$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
 				//string var = addNewVar();
-				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ $1.label + " = " + $3.label + ";\n";
+				//cout<<"= "<<$1.tipo<<" "<<$1.label<<";\n";
+
+				$1.tipo = verificaTipo($1.tipo, "=", $3.tipo);
+				string cast = $3.tipo != $1.tipo ? "("+ $1.tipo +")" : "";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ $1.label + " = " + cast+" "+ $3.label + ";\n";
 
 			}
 			| TK_NUM
 			{
 				string var = addNewVar();
-				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<"\n;";
+				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<";\n";
 
 				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
 
@@ -161,7 +194,7 @@ E 			: E '+' E
 			| TK_REAL
 			{
 				string var = addNewVar();
-				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<"\n;";
+				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<";\n";
 
 				$$.traducao = "\t"+$1.tipo+ " " + var + " = "+ $1.label + ";\n";
 
@@ -173,23 +206,22 @@ E 			: E '+' E
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
 
-				$$.traducao = "\t"+ $1.traducao+" " + var + ";\n";
-
+				//$$.traducao = "\t"+ $1.traducao+" " + var + ";\n";
+				decl += "\t"+ $1.tipo+" " + var + ";\n";
 				//insere variavel na tabela
-				addNewVarToTable( $2.label, var, $1.traducao);
+				//cout<<"\ndec::"<<$1.traducao<<"::"<<$1.tipo<<":::\n";
+				addNewVarToTable( $2.label, var, $1.tipo);
 				$$.label = var;
-				$$.tipo = $1.traducao;
+				$$.tipo = $1.tipo;
 			}
 			|TK_ID
 			{	
 
-				cout <<"$1.traducao"<<":"<<$1.label<<":"<<$1.tipo<<":"<<$1.nomeTemp<<":\n";
+				//cout <<"$1.traducao"<<":"<<$1.label<<":"<<$1.tipo<<":"<<$1.nomeTemp<<":\n";
 				//cout <<"$2.traducao"<<":"<<$2.label<<":"<<$2.tipo<<":"<<$2.nomeTemp<<":\n";
 				//cout <<"$3.traducao"<<":"<<$3.label<<":"<<$3.tipo<<":"<<$3.nomeTemp<<":\n";
 				
-				//cout<<verificaTipo($1.tipo, "+", $3.tipo)<<"::";
-				//busca na tabela de variáveis, o nome da váriavel 
-				$$.label =  getVar($1.label)->nomeTemp;
+				$$.label = getVar($1.label)->nomeTemp;
 				$$.tipo = getVar($1.label)->tipo;
 				$$.nomeTemp =  $1.label;
 			}
@@ -199,19 +231,19 @@ E 			: E '+' E
 //Declaração de tipos
 DECLARACAO	: TK_TIPO_INT{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "int"; //retorna int na recursão
+				$$.tipo = "int"; //retorna int na recursão
 			}
 			| TK_TIPO_BOOL{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "bool"; //retorna bool na recursão
+				$$.tipo = "bool"; //retorna bool na recursão
 			}
 			| TK_TIPO_FLOAT{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "float"; //retorna float na recursão
+				$$.tipo = "float"; //retorna float na recursão
 			}
 			| TK_TIPO_CHAR{
 				//Criar tabela para guardar tipo 
-				$$.traducao = "char"; //retorna char na recursão
+				$$.tipo = "char"; //retorna char na recursão
 			}
 			;
 
@@ -251,7 +283,7 @@ string addNewVar(){
 void addNewVarToTable(string nomeTemp, string varTemp, string tipo){
 	//verifica se a nova variavel está na tabela
 	if(varTable.find(nomeTemp)!=varTable.end()){
-		cout<<"error: redeclaration of '"<<tipo<<" "<<nomeTemp<< "'\n";
+		yyerror("error: redeclaration of '"+tipo+" "+nomeTemp+ "'\n");
 	}else{
 		varTable[nomeTemp] = new VarNode(varTemp, tipo);
 	}
@@ -260,6 +292,21 @@ VarNode* getVar(string nomeTemp){
 	//cout<<varTable[nomeTemp]->nomeTemp<<" getVar\n";
 	return varTable[nomeTemp]; 
 }
+
+string verificaTipo(string tipoA, string operador, string tipoB){
+	if(TabelaTipos.empty()){
+		criaTabelaTipos();
+	}
+	string busca = tipoA+operador+tipoB;
+	string retorno  = TabelaTipos.find(busca)->second;
+	if(retorno == "ERRO")
+		yyerror("ERRO");
+	//cout <<tipoA<<" "<<operador<<" "<<tipoB<<" :: "<< retorno<<"\n ";
+	
+	//TabelaTipos[busca]
+	return retorno;
+}
+
 void criaTabelaTipos(){	
 	 //Tabela de Operação para soma
     TabelaTipos["int+int"] = "int";
@@ -365,4 +412,30 @@ void criaTabelaTipos(){
     TabelaTipos["hex/string"] = "ERRO";
     TabelaTipos["hex/char"] = "ERRO";
     TabelaTipos["hex/hex"] = "ERRO";
+    //Atribuição
+    TabelaTipos["int=int"] = "int";
+    TabelaTipos["int=float"] = "int";
+    TabelaTipos["int=string"] = "ERRO";
+    TabelaTipos["int=char"] = "ERRO"; //Verificar se será esse tipo mesmo para essa operação
+    TabelaTipos["int=hex"] = "int";
+    TabelaTipos["float=int"] = "float";
+    TabelaTipos["float=float"] = "float";
+    TabelaTipos["float=string"] = "ERRO";
+    TabelaTipos["float=char"] = "ERRO";
+    TabelaTipos["float=hex"] = "ERRO";
+    TabelaTipos["string=int"] = "ERRO";
+    TabelaTipos["string=float"] = "string";
+    TabelaTipos["string=string"] = "string";
+    TabelaTipos["string=char"] = "string";
+    TabelaTipos["string=hex"] = "string";
+    TabelaTipos["char=int"] = "char";
+    TabelaTipos["char=float"] = "ERRO";
+    TabelaTipos["char=string"] = "ERRO";
+    TabelaTipos["char=char"] = "char";
+    TabelaTipos["char=hex"] = "char";
+    TabelaTipos["hex=int"] = "hex";
+    TabelaTipos["hex=float"] = "hex";
+    TabelaTipos["hex=string"] = "ERRO";
+    TabelaTipos["hex=char"] = "ERRO";
+    TabelaTipos["hex=hex"] = "hex";
 }

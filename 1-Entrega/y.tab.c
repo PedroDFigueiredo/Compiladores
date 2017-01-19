@@ -82,6 +82,7 @@ void criaTabelaTipos();
 string to_string(int i);
 string addNewVar();
 void addNewVarToTable(string tipo, string nomeTemp, string varTemp);
+string verificaTipo(string tipoA, string operador, string tipoB);
 
 struct atributos
 {
@@ -109,23 +110,13 @@ map<string, VarNode*> varTable;
 
 map<string, string> TabelaTipos;
 
-string verificaTipo(string tipoA, string operador, string tipoB){
-	if(TabelaTipos.empty()){
-		criaTabelaTipos();
-	}
-	string busca = tipoA+operador+tipoB;
-	string retorno  =TabelaTipos.find(busca)->second;
-	//cout << busca<<"verficabusca\n";
-	
-	//TabelaTipos[busca]
-	return retorno;
-}
+string decl = "";
 
 
 int yylex(void);
 void yyerror(string);
 
-#line 129 "y.tab.c" /* yacc.c:339  */
+#line 120 "y.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -202,7 +193,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 206 "y.tab.c" /* yacc.c:358  */
+#line 197 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -500,9 +491,9 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    76,    76,    82,    88,    92,    95,    98,   109,   118,
-     127,   136,   143,   152,   161,   171,   183,   200,   204,   208,
-     212
+       0,    67,    67,    73,    79,    83,    86,    89,   106,   125,
+     145,   165,   176,   185,   194,   204,   217,   232,   236,   240,
+     244
 };
 #endif
 
@@ -1292,109 +1283,151 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 77 "sintatica.y" /* yacc.c:1646  */
+#line 68 "sintatica.y" /* yacc.c:1646  */
     {
-				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << (yyvsp[0]).traducao << "\treturn 0;\n}" << endl; 
+				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" <<decl<< (yyvsp[0]).traducao << "\treturn 0;\n}" << endl; 
 			}
-#line 1300 "y.tab.c" /* yacc.c:1646  */
+#line 1291 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 83 "sintatica.y" /* yacc.c:1646  */
+#line 74 "sintatica.y" /* yacc.c:1646  */
     {
 				(yyval).traducao = (yyvsp[-1]).traducao;
 			}
-#line 1308 "y.tab.c" /* yacc.c:1646  */
+#line 1299 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 89 "sintatica.y" /* yacc.c:1646  */
+#line 80 "sintatica.y" /* yacc.c:1646  */
     {
 			 (yyval).traducao = (yyvsp[-1]).traducao + (yyvsp[0]).traducao;
 			}
-#line 1316 "y.tab.c" /* yacc.c:1646  */
+#line 1307 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 99 "sintatica.y" /* yacc.c:1646  */
+#line 90 "sintatica.y" /* yacc.c:1646  */
     {
-				string var = addNewVar();
+				string var = addNewVar(), cast1 = "", cast3 = "";
+				string tipo = verificaTipo((yyvsp[-2]).tipo, "+", (yyvsp[0]).tipo);
+				if((yyvsp[-2]).tipo != (yyvsp[0]).tipo){
+					if(tipo != (yyvsp[-2]).tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != (yyvsp[0]).tipo)
+						cast3 = "("+tipo+") ";
+				}
 				
-				(yyvsp[-2]).tipo = verificaTipo((yyvsp[-2]).tipo, "+", (yyvsp[0]).tipo);
-				cout<<(yyvsp[-2]).tipo<<"++\n";
-				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ var + " = " + (yyvsp[-2]).label + " + " + (yyvsp[0]).label  +";\n";
+				(yyvsp[-2]).tipo = tipo;
+				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ var + " = " + cast1 + (yyvsp[-2]).label + " + " + cast3 + (yyvsp[0]).label  +";\n";
 
 				(yyval).label = var;
-
+				(yyval).tipo = tipo;
 			}
-#line 1331 "y.tab.c" /* yacc.c:1646  */
+#line 1328 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 110 "sintatica.y" /* yacc.c:1646  */
+#line 107 "sintatica.y" /* yacc.c:1646  */
     {
-				string var = addNewVar();
-
+				string var = addNewVar(), cast1 = "", cast3 = "";
+				string tipo = verificaTipo((yyvsp[-2]).tipo, "-", (yyvsp[0]).tipo);
+				if((yyvsp[-2]).tipo != (yyvsp[0]).tipo){
+					if(tipo != (yyvsp[-2]).tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != (yyvsp[0]).tipo)
+						cast3 = "("+tipo+") ";
+				}
+				
+				(yyvsp[-2]).tipo = verificaTipo((yyvsp[-2]).tipo, "-", (yyvsp[0]).tipo);
 				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ var + " = " + (yyvsp[-2]).label + " - " + (yyvsp[0]).label  +";\n";
 
 				(yyval).label = var;
+				(yyval).tipo = tipo;
+
 
 			}
-#line 1344 "y.tab.c" /* yacc.c:1646  */
+#line 1351 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 119 "sintatica.y" /* yacc.c:1646  */
+#line 126 "sintatica.y" /* yacc.c:1646  */
     {
-				string var = addNewVar();
+				string var = addNewVar(), cast1 = "", cast3 = "";
 
+				string tipo = verificaTipo((yyvsp[-2]).tipo, "*", (yyvsp[0]).tipo);
+				if((yyvsp[-2]).tipo != (yyvsp[0]).tipo){
+					if(tipo != (yyvsp[-2]).tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != (yyvsp[0]).tipo)
+						cast3 = "("+tipo+") ";
+				}
+				
+				(yyvsp[-2]).tipo = tipo;
 				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ var + " = " + (yyvsp[-2]).label + " * " + (yyvsp[0]).label  +";\n";
 
 				(yyval).label = var;
+				(yyval).tipo = tipo;
+
 
 			}
-#line 1357 "y.tab.c" /* yacc.c:1646  */
+#line 1375 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 128 "sintatica.y" /* yacc.c:1646  */
+#line 146 "sintatica.y" /* yacc.c:1646  */
     {
-				string var = addNewVar();
+				string var = addNewVar(), cast1 = "", cast3 = "";
 
+				string tipo = verificaTipo((yyvsp[-2]).tipo, "/", (yyvsp[0]).tipo);
+				if((yyvsp[-2]).tipo != (yyvsp[0]).tipo){
+					if(tipo != (yyvsp[-2]).tipo)
+						cast1 = "("+tipo+") ";
+					if(tipo != (yyvsp[0]).tipo)
+						cast3 = "("+tipo+") ";
+				}
+				
+				(yyvsp[-2]).tipo = tipo;
 				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ var + " = " + (yyvsp[-2]).label + " / " + (yyvsp[0]).label  +";\n";
 
 				(yyval).label = var;
+				(yyval).tipo = tipo;
+
 
 			}
-#line 1370 "y.tab.c" /* yacc.c:1646  */
+#line 1399 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 137 "sintatica.y" /* yacc.c:1646  */
+#line 166 "sintatica.y" /* yacc.c:1646  */
     {	
-				(yyvsp[-2]).tipo = verificaTipo((yyvsp[-2]).tipo, "+", (yyvsp[0]).tipo);
+				//$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
 				//string var = addNewVar();
-				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ (yyvsp[-2]).label + " = " + (yyvsp[0]).label + ";\n";
+				//cout<<"= "<<$1.tipo<<" "<<$1.label<<";\n";
+
+				(yyvsp[-2]).tipo = verificaTipo((yyvsp[-2]).tipo, "=", (yyvsp[0]).tipo);
+				string cast = (yyvsp[0]).tipo != (yyvsp[-2]).tipo ? "("+ (yyvsp[-2]).tipo +")" : "";
+				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ (yyvsp[-2]).label + " = " + cast+" "+ (yyvsp[0]).label + ";\n";
 
 			}
-#line 1381 "y.tab.c" /* yacc.c:1646  */
+#line 1414 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 144 "sintatica.y" /* yacc.c:1646  */
+#line 177 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
-				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<"\n;";
+				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<";\n";
 
 				(yyval).traducao = "\t"+(yyvsp[0]).tipo+" "+ var + " = "+ (yyvsp[0]).label + ";\n";
 
 				(yyval).label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
 			}
-#line 1394 "y.tab.c" /* yacc.c:1646  */
+#line 1427 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 153 "sintatica.y" /* yacc.c:1646  */
+#line 186 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
 				//cout<<"HAR "<<$1.tipo<<" "<<$1.label<<"\n;";
@@ -1403,93 +1436,92 @@ yyreduce:
 
 				(yyval).label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
 			}
-#line 1407 "y.tab.c" /* yacc.c:1646  */
+#line 1440 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 162 "sintatica.y" /* yacc.c:1646  */
+#line 195 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
-				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<"\n;";
+				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<";\n";
 
 				(yyval).traducao = "\t"+(yyvsp[0]).tipo+ " " + var + " = "+ (yyvsp[0]).label + ";\n";
 
 				(yyval).label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
 			}
-#line 1420 "y.tab.c" /* yacc.c:1646  */
+#line 1453 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 172 "sintatica.y" /* yacc.c:1646  */
+#line 205 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
 
-				(yyval).traducao = "\t"+ (yyvsp[-1]).traducao+" " + var + ";\n";
-
+				//$$.traducao = "\t"+ $1.traducao+" " + var + ";\n";
+				decl += "\t"+ (yyvsp[-1]).tipo+" " + var + ";\n";
 				//insere variavel na tabela
-				addNewVarToTable( (yyvsp[0]).label, var, (yyvsp[-1]).traducao);
+				//cout<<"\ndec::"<<$1.traducao<<"::"<<$1.tipo<<":::\n";
+				addNewVarToTable( (yyvsp[0]).label, var, (yyvsp[-1]).tipo);
 				(yyval).label = var;
-				(yyval).tipo = (yyvsp[-1]).traducao;
+				(yyval).tipo = (yyvsp[-1]).tipo;
 			}
-#line 1436 "y.tab.c" /* yacc.c:1646  */
+#line 1470 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 184 "sintatica.y" /* yacc.c:1646  */
+#line 218 "sintatica.y" /* yacc.c:1646  */
     {	
 
-				cout <<"$1.traducao"<<":"<<(yyvsp[0]).label<<":"<<(yyvsp[0]).tipo<<":"<<(yyvsp[0]).nomeTemp<<":\n";
+				//cout <<"$1.traducao"<<":"<<$1.label<<":"<<$1.tipo<<":"<<$1.nomeTemp<<":\n";
 				//cout <<"$2.traducao"<<":"<<$2.label<<":"<<$2.tipo<<":"<<$2.nomeTemp<<":\n";
 				//cout <<"$3.traducao"<<":"<<$3.label<<":"<<$3.tipo<<":"<<$3.nomeTemp<<":\n";
 				
-				//cout<<verificaTipo($1.tipo, "+", $3.tipo)<<"::";
-				//busca na tabela de variáveis, o nome da váriavel 
-				(yyval).label =  getVar((yyvsp[0]).label)->nomeTemp;
+				(yyval).label = getVar((yyvsp[0]).label)->nomeTemp;
 				(yyval).tipo = getVar((yyvsp[0]).label)->tipo;
 				(yyval).nomeTemp =  (yyvsp[0]).label;
 			}
-#line 1453 "y.tab.c" /* yacc.c:1646  */
+#line 1485 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 200 "sintatica.y" /* yacc.c:1646  */
+#line 232 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "int"; //retorna int na recursão
+				(yyval).tipo = "int"; //retorna int na recursão
 			}
-#line 1462 "y.tab.c" /* yacc.c:1646  */
+#line 1494 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 204 "sintatica.y" /* yacc.c:1646  */
+#line 236 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "bool"; //retorna bool na recursão
+				(yyval).tipo = "bool"; //retorna bool na recursão
 			}
-#line 1471 "y.tab.c" /* yacc.c:1646  */
+#line 1503 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 208 "sintatica.y" /* yacc.c:1646  */
+#line 240 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "float"; //retorna float na recursão
+				(yyval).tipo = "float"; //retorna float na recursão
 			}
-#line 1480 "y.tab.c" /* yacc.c:1646  */
+#line 1512 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 212 "sintatica.y" /* yacc.c:1646  */
+#line 244 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "char"; //retorna char na recursão
+				(yyval).tipo = "char"; //retorna char na recursão
 			}
-#line 1489 "y.tab.c" /* yacc.c:1646  */
+#line 1521 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1493 "y.tab.c" /* yacc.c:1646  */
+#line 1525 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1717,7 +1749,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 218 "sintatica.y" /* yacc.c:1906  */
+#line 250 "sintatica.y" /* yacc.c:1906  */
 
 
 #include "lex.yy.c"
@@ -1754,7 +1786,7 @@ string addNewVar(){
 void addNewVarToTable(string nomeTemp, string varTemp, string tipo){
 	//verifica se a nova variavel está na tabela
 	if(varTable.find(nomeTemp)!=varTable.end()){
-		cout<<"error: redeclaration of '"<<tipo<<" "<<nomeTemp<< "'\n";
+		yyerror("error: redeclaration of '"+tipo+" "+nomeTemp+ "'\n");
 	}else{
 		varTable[nomeTemp] = new VarNode(varTemp, tipo);
 	}
@@ -1763,6 +1795,21 @@ VarNode* getVar(string nomeTemp){
 	//cout<<varTable[nomeTemp]->nomeTemp<<" getVar\n";
 	return varTable[nomeTemp]; 
 }
+
+string verificaTipo(string tipoA, string operador, string tipoB){
+	if(TabelaTipos.empty()){
+		criaTabelaTipos();
+	}
+	string busca = tipoA+operador+tipoB;
+	string retorno  = TabelaTipos.find(busca)->second;
+	if(retorno == "ERRO")
+		yyerror("ERRO");
+	//cout <<tipoA<<" "<<operador<<" "<<tipoB<<" :: "<< retorno<<"\n ";
+	
+	//TabelaTipos[busca]
+	return retorno;
+}
+
 void criaTabelaTipos(){	
 	 //Tabela de Operação para soma
     TabelaTipos["int+int"] = "int";
@@ -1868,4 +1915,30 @@ void criaTabelaTipos(){
     TabelaTipos["hex/string"] = "ERRO";
     TabelaTipos["hex/char"] = "ERRO";
     TabelaTipos["hex/hex"] = "ERRO";
+    //Atribuição
+    TabelaTipos["int=int"] = "int";
+    TabelaTipos["int=float"] = "int";
+    TabelaTipos["int=string"] = "ERRO";
+    TabelaTipos["int=char"] = "ERRO"; //Verificar se será esse tipo mesmo para essa operação
+    TabelaTipos["int=hex"] = "int";
+    TabelaTipos["float=int"] = "float";
+    TabelaTipos["float=float"] = "float";
+    TabelaTipos["float=string"] = "ERRO";
+    TabelaTipos["float=char"] = "ERRO";
+    TabelaTipos["float=hex"] = "ERRO";
+    TabelaTipos["string=int"] = "ERRO";
+    TabelaTipos["string=float"] = "string";
+    TabelaTipos["string=string"] = "string";
+    TabelaTipos["string=char"] = "string";
+    TabelaTipos["string=hex"] = "string";
+    TabelaTipos["char=int"] = "char";
+    TabelaTipos["char=float"] = "ERRO";
+    TabelaTipos["char=string"] = "ERRO";
+    TabelaTipos["char=char"] = "char";
+    TabelaTipos["char=hex"] = "char";
+    TabelaTipos["hex=int"] = "hex";
+    TabelaTipos["hex=float"] = "hex";
+    TabelaTipos["hex=string"] = "ERRO";
+    TabelaTipos["hex=char"] = "ERRO";
+    TabelaTipos["hex=hex"] = "hex";
 }
