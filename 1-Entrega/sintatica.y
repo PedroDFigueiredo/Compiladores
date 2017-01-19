@@ -22,9 +22,11 @@ string verificaTipo(string tipoA, string operador, string tipoB);
 struct atributos
 {
 	string label;
+	string operador;
 	string traducao;
 	string tipo;
 	string nomeTemp;
+	
 };
 
 class VarNode{
@@ -55,6 +57,7 @@ void yyerror(string);
 %token TK_NUM TK_CHAR TK_REAL
 %token TK_MAIN TK_ID TK_TIPO_INT TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL
 %token TK_FIM TK_ERROR
+%token OPERADOR 
 
 %start S
 
@@ -86,10 +89,10 @@ COMANDOS	: COMANDO COMANDOS
 COMANDO 	: E ';'
 			;
 
-E 			: E '+' E
+E 			: E OPERADOR E
 			{
 				string var = addNewVar(), cast1 = "", cast3 = "";
-				string tipo = verificaTipo($1.tipo, "+", $3.tipo);
+				string tipo = verificaTipo($1.tipo, $2.operador, $3.tipo);
 				if($1.tipo != $3.tipo){
 					if(tipo != $1.tipo)
 						cast1 = "("+tipo+") ";
@@ -98,70 +101,12 @@ E 			: E '+' E
 				}
 				
 				$1.tipo = tipo;
-				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + cast1 + $1.label + " + " + cast3 + $3.label  +";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + cast1 + $1.label + " " + $2.operador + " " + cast3 + $3.label  +";\n";
 
 				$$.label = var;
 				$$.tipo = tipo;
 			}
-			| E '-' E
-			{
-				string var = addNewVar(), cast1 = "", cast3 = "";
-				string tipo = verificaTipo($1.tipo, "-", $3.tipo);
-				if($1.tipo != $3.tipo){
-					if(tipo != $1.tipo)
-						cast1 = "("+tipo+") ";
-					if(tipo != $3.tipo)
-						cast3 = "("+tipo+") ";
-				}
-				
-				$1.tipo = verificaTipo($1.tipo, "-", $3.tipo);
-				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " - " + $3.label  +";\n";
-
-				$$.label = var;
-				$$.tipo = tipo;
-
-
-			}
-			| E '*' E
-			{
-				string var = addNewVar(), cast1 = "", cast3 = "";
-
-				string tipo = verificaTipo($1.tipo, "*", $3.tipo);
-				if($1.tipo != $3.tipo){
-					if(tipo != $1.tipo)
-						cast1 = "("+tipo+") ";
-					if(tipo != $3.tipo)
-						cast3 = "("+tipo+") ";
-				}
-				
-				$1.tipo = tipo;
-				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " * " + $3.label  +";\n";
-
-				$$.label = var;
-				$$.tipo = tipo;
-
-
-			}
-			| E '/' E
-			{
-				string var = addNewVar(), cast1 = "", cast3 = "";
-
-				string tipo = verificaTipo($1.tipo, "/", $3.tipo);
-				if($1.tipo != $3.tipo){
-					if(tipo != $1.tipo)
-						cast1 = "("+tipo+") ";
-					if(tipo != $3.tipo)
-						cast3 = "("+tipo+") ";
-				}
-				
-				$1.tipo = tipo;
-				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ var + " = " + $1.label + " / " + $3.label  +";\n";
-
-				$$.label = var;
-				$$.tipo = tipo;
-
-
-			}
+		
 			| E '=' E
 			{	
 				//$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);

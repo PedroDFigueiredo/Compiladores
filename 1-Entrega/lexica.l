@@ -13,6 +13,7 @@ REAL {NUM}+("."{NUM}+)?
 CHAR \'({LETRA}|{NUM})\'
 ID {LETRA}({LETRA}|{NUM})*
 
+
 %%
 
 "\n"		{}
@@ -24,13 +25,14 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "int"		{return TK_TIPO_INT;}
 "float"     {return TK_TIPO_FLOAT;}
-"char"     {return TK_TIPO_CHAR;}
-"bool"     {return TK_TIPO_BOOL;}
+"char"      {return TK_TIPO_CHAR;}
+"bool"      {return TK_TIPO_BOOL;}
 
 
 [(){}[\];,]	{ return *yytext; }
 
-[+\-*/=]		{ return *yytext; }
+[+\-*/]		{ yylval.operador = yytext;   return OPERADOR; }
+[=]         { return *yytext; }
 
 {NUM}		{ yylval.label = yytext;  yylval.tipo = "int"; return TK_NUM; }
 {REAL}		{ yylval.label = yytext;  yylval.tipo = "float"; return TK_REAL; }
