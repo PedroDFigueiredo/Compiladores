@@ -45,10 +45,7 @@ map<string, VarNode*> varTable;
 
 map<string, string> TabelaTipos;
 
-<<<<<<< HEAD
 string decl = "";
-=======
->>>>>>> 502f60fe83e7f08bc77d2e1785c289b1849376f3
 
 
 int yylex(void);
@@ -169,10 +166,7 @@ E 			: E '+' E
 			{	
 				//$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
 				//string var = addNewVar();
-<<<<<<< HEAD
 				//cout<<"= "<<$1.tipo<<" "<<$1.label<<";\n";
-=======
->>>>>>> 502f60fe83e7f08bc77d2e1785c289b1849376f3
 
 				$1.tipo = verificaTipo($1.tipo, "=", $3.tipo);
 				string cast = $3.tipo != $1.tipo ? "("+ $1.tipo +")" : "";

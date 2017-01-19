@@ -1,10 +1,6 @@
 int main()
 {
 	int x = 1.0 * 50 + 20;
-	
-
-
-
 
 
 	float j = 5;
