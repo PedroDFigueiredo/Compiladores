@@ -81,29 +81,29 @@ int varCount=0;
 void criaTabelaTipos();
 string to_string(int i);
 string addNewVar();
-void addNewVarToTable(string tipo, string name, string varTemp);
+void addNewVarToTable(string tipo, string nomeTemp, string varTemp);
 
 struct atributos
 {
 	string label;
 	string traducao;
 	string tipo;
-	string teste;
+	string nomeTemp;
 };
 
 class VarNode{
 	public: 
-		string name; //Tipo de var Var0, Var2;
+		string nomeTemp; //Tipo de var Var0, Var2;
 		string tipo;
 		VarNode(string , string);
 };
 
 VarNode::VarNode(string a, string b){
-	name = a;
+	nomeTemp = a;
 	tipo = b;
 };
 
-VarNode* getVar(string name);
+VarNode* getVar(string nomeTemp);
 
 map<string, VarNode*> varTable;
 
@@ -500,9 +500,9 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    76,    76,    82,    88,    92,    95,    98,   124,   133,
-     142,   151,   157,   165,   173,   182,   194,   204,   208,   212,
-     216
+       0,    76,    76,    82,    88,    92,    95,    98,   109,   118,
+     127,   136,   143,   152,   161,   171,   183,   200,   204,   208,
+     212
 };
 #endif
 
@@ -1320,33 +1320,18 @@ yyreduce:
     {
 				string var = addNewVar();
 				
-				if(getVar((yyvsp[0]).teste)){ //Se o getVar não existe ele retorna 0 e não entra no IF!!!
-					//cout <<getVar($1.teste)->tipo <<  ": " <<getVar($3.teste)->tipo;
-					(yyvsp[-2]).tipo = verificaTipo(getVar((yyvsp[-2]).teste)->tipo , "+", getVar((yyvsp[0]).teste)->tipo);
-					cout << verificaTipo(getVar((yyvsp[-2]).teste)->tipo , "+", getVar((yyvsp[0]).teste)->tipo); 
-				}else{
-					//$1.tipo = verificaTipo($1.teste , "+", getVar($3.teste)->tipo);
-					cout <<"else "<< (yyvsp[-2]).traducao , "+", (yyvsp[0]).traducao; 
-				}
-				
+				(yyvsp[-2]).tipo = verificaTipo((yyvsp[-2]).tipo, "+", (yyvsp[0]).tipo);
+				cout<<(yyvsp[-2]).tipo<<"++\n";
 				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ var + " = " + (yyvsp[-2]).label + " + " + (yyvsp[0]).label  +";\n";
-				//cout <<$2.traducao<<":"<<getVar($2.label)->tipo <<":"<< $3.traducao ;
-				
-				
-				
-				
-				//cout << verificaTipo( getVar($1.label)->tipo, " + ", getVar($3.label)->tipo );
-				//cout << ":teste\n";
-				//criaTabelaTipos() $1.label + " + " + $3.label
 
 				(yyval).label = var;
 
 			}
-#line 1346 "y.tab.c" /* yacc.c:1646  */
+#line 1331 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 125 "sintatica.y" /* yacc.c:1646  */
+#line 110 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
 
@@ -1355,11 +1340,11 @@ yyreduce:
 				(yyval).label = var;
 
 			}
-#line 1359 "y.tab.c" /* yacc.c:1646  */
+#line 1344 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 134 "sintatica.y" /* yacc.c:1646  */
+#line 119 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
 
@@ -1368,11 +1353,11 @@ yyreduce:
 				(yyval).label = var;
 
 			}
-#line 1372 "y.tab.c" /* yacc.c:1646  */
+#line 1357 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 143 "sintatica.y" /* yacc.c:1646  */
+#line 128 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
 
@@ -1381,23 +1366,38 @@ yyreduce:
 				(yyval).label = var;
 
 			}
-#line 1385 "y.tab.c" /* yacc.c:1646  */
+#line 1370 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 152 "sintatica.y" /* yacc.c:1646  */
+#line 137 "sintatica.y" /* yacc.c:1646  */
     {	
+				(yyvsp[-2]).tipo = verificaTipo((yyvsp[-2]).tipo, "+", (yyvsp[0]).tipo);
 				//string var = addNewVar();
 				(yyval).traducao = (yyvsp[-2]).traducao + (yyvsp[0]).traducao + "\t" +(yyvsp[-2]).tipo+" "+ (yyvsp[-2]).label + " = " + (yyvsp[0]).label + ";\n";
 
 			}
-#line 1395 "y.tab.c" /* yacc.c:1646  */
+#line 1381 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 158 "sintatica.y" /* yacc.c:1646  */
+#line 144 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
+				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<"\n;";
+
+				(yyval).traducao = "\t"+(yyvsp[0]).tipo+" "+ var + " = "+ (yyvsp[0]).label + ";\n";
+
+				(yyval).label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
+			}
+#line 1394 "y.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 13:
+#line 153 "sintatica.y" /* yacc.c:1646  */
+    {
+				string var = addNewVar();
+				//cout<<"HAR "<<$1.tipo<<" "<<$1.label<<"\n;";
 
 				(yyval).traducao = "\t"+(yyvsp[0]).tipo+" "+ var + " = "+ (yyvsp[0]).label + ";\n";
 
@@ -1406,32 +1406,21 @@ yyreduce:
 #line 1407 "y.tab.c" /* yacc.c:1646  */
     break;
 
-  case 13:
-#line 166 "sintatica.y" /* yacc.c:1646  */
-    {
-				string var = addNewVar();
-
-				(yyval).traducao = "\t"+(yyvsp[0]).tipo+" "+ var + " = "+ (yyvsp[0]).label + ";\n";
-
-				(yyval).label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
-			}
-#line 1419 "y.tab.c" /* yacc.c:1646  */
-    break;
-
   case 14:
-#line 174 "sintatica.y" /* yacc.c:1646  */
+#line 162 "sintatica.y" /* yacc.c:1646  */
     {
 				string var = addNewVar();
+				//cout<<"EAL "<<$1.tipo<<" "<<$1.label<<"\n;";
 
 				(yyval).traducao = "\t"+(yyvsp[0]).tipo+ " " + var + " = "+ (yyvsp[0]).label + ";\n";
 
 				(yyval).label = var; //Armazena o var no label para no próximo passo da recursão saber qual variavel foi criada.
 			}
-#line 1431 "y.tab.c" /* yacc.c:1646  */
+#line 1420 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 183 "sintatica.y" /* yacc.c:1646  */
+#line 172 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
@@ -1443,57 +1432,64 @@ yyreduce:
 				(yyval).label = var;
 				(yyval).tipo = (yyvsp[-1]).traducao;
 			}
-#line 1447 "y.tab.c" /* yacc.c:1646  */
+#line 1436 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 195 "sintatica.y" /* yacc.c:1646  */
+#line 184 "sintatica.y" /* yacc.c:1646  */
     {	
+
+				cout <<"$1.traducao"<<":"<<(yyvsp[0]).label<<":"<<(yyvsp[0]).tipo<<":"<<(yyvsp[0]).nomeTemp<<":\n";
+				//cout <<"$2.traducao"<<":"<<$2.label<<":"<<$2.tipo<<":"<<$2.nomeTemp<<":\n";
+				//cout <<"$3.traducao"<<":"<<$3.label<<":"<<$3.tipo<<":"<<$3.nomeTemp<<":\n";
+				
+				//cout<<verificaTipo($1.tipo, "+", $3.tipo)<<"::";
 				//busca na tabela de variáveis, o nome da váriavel 
-				(yyval).label =  getVar((yyvsp[0]).label)->name;
-				(yyval).teste =  (yyvsp[0]).label;
+				(yyval).label =  getVar((yyvsp[0]).label)->nomeTemp;
+				(yyval).tipo = getVar((yyvsp[0]).label)->tipo;
+				(yyval).nomeTemp =  (yyvsp[0]).label;
 			}
-#line 1457 "y.tab.c" /* yacc.c:1646  */
+#line 1453 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 204 "sintatica.y" /* yacc.c:1646  */
+#line 200 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
 				(yyval).traducao = "int"; //retorna int na recursão
 			}
-#line 1466 "y.tab.c" /* yacc.c:1646  */
+#line 1462 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 208 "sintatica.y" /* yacc.c:1646  */
+#line 204 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "bool "; //retorna bool na recursão
+				(yyval).traducao = "bool"; //retorna bool na recursão
 			}
-#line 1475 "y.tab.c" /* yacc.c:1646  */
+#line 1471 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 212 "sintatica.y" /* yacc.c:1646  */
+#line 208 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "float "; //retorna float na recursão
+				(yyval).traducao = "float"; //retorna float na recursão
 			}
-#line 1484 "y.tab.c" /* yacc.c:1646  */
+#line 1480 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 216 "sintatica.y" /* yacc.c:1646  */
+#line 212 "sintatica.y" /* yacc.c:1646  */
     {
 				//Criar tabela para guardar tipo 
-				(yyval).traducao = "char "; //retorna char na recursão
+				(yyval).traducao = "char"; //retorna char na recursão
 			}
-#line 1493 "y.tab.c" /* yacc.c:1646  */
+#line 1489 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1497 "y.tab.c" /* yacc.c:1646  */
+#line 1493 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1721,7 +1717,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 222 "sintatica.y" /* yacc.c:1906  */
+#line 218 "sintatica.y" /* yacc.c:1906  */
 
 
 #include "lex.yy.c"
@@ -1733,7 +1729,7 @@ int main( int argc, char* argv[] )
 	yyparse();
 	//cout<<"\n\n::::\n";
 	//for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
-    //cout << it->first << " => " << it->second->name << '\n';
+    //cout << it->first << " => " << it->second->nomeTemp << '\n';
 
 	return 0;
 }
@@ -1755,17 +1751,17 @@ string addNewVar(){
 
 	return ("var" + to_string(varCount++)); 
 }
-void addNewVarToTable(string name, string varTemp, string tipo){
+void addNewVarToTable(string nomeTemp, string varTemp, string tipo){
 	//verifica se a nova variavel está na tabela
-	if(varTable.find(name)!=varTable.end()){
-		cout<<"error: redeclaration of '"<<tipo<<" "<<name<< "'\n";
+	if(varTable.find(nomeTemp)!=varTable.end()){
+		cout<<"error: redeclaration of '"<<tipo<<" "<<nomeTemp<< "'\n";
 	}else{
-		varTable[name] = new VarNode(varTemp, tipo);
+		varTable[nomeTemp] = new VarNode(varTemp, tipo);
 	}
 }
-VarNode* getVar(string name){
-	//cout<<varTable[name]->name<<" getVar\n";
-	return varTable[name]; 
+VarNode* getVar(string nomeTemp){
+	//cout<<varTable[nomeTemp]->nomeTemp<<" getVar\n";
+	return varTable[nomeTemp]; 
 }
 void criaTabelaTipos(){	
 	 //Tabela de Operação para soma
