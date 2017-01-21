@@ -46,12 +46,12 @@ FLOAT {SINAL}{REAL}
 "!"					{yylval.label = yytext; return TK_OPER_NOT;}
 
 --------Relacionais
-">"     {yylval.label = yytext; return TK_OPER_MAIOR;}
-">="    {yylval.label = yytext; return TK_OPER_MAIOR_IGUAL;}
-"<"     {yylval.label = yytext; return TK_OPER_MENOR;}
-"<="    {yylval.label = yytext; return TK_OPER_MENOR_IGUAL;}
-"=="    {yylval.label = yytext; return TK_OPER_IGUAL;}
-"!="    {yylval.label = yytext; return TK_OPER_DIFERENTE;}
+----">"     {yylval.label = yytext; return TK_OPER_MAIOR;}
+----">="    {yylval.label = yytext; return TK_OPER_MAIOR_IGUAL;}
+---"<"     {yylval.label = yytext; return TK_OPER_MENOR;}
+---"<="    {yylval.label = yytext; return TK_OPER_MENOR_IGUAL;}
+---"=="    {yylval.label = yytext; return TK_OPER_IGUAL;}
+---"!="    {yylval.label = yytext; return TK_OPER_DIFERENTE;}
 --------------------FIMOPEADORES----------
 
 
@@ -59,7 +59,7 @@ FLOAT {SINAL}{REAL}
 
 
 
-[+\-*/]		{ yylval.operador = yytext;   return OPERADOR; }
+[+\-*/><=]|">="|"=<"|"!=" { yylval.operador = yytext;   return OPERADOR; }
 [=]         { return *yytext; }
 
 

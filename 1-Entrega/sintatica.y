@@ -72,7 +72,7 @@ void yyerror(string);
 
 S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			{
-				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" <<decl<< $5.traducao << "\treturn 0;\n}" << endl; 
+				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n" <<decl<< $5.traducao << "\treturn 0;\n}" << endl; 
 			}
 			;
 
@@ -96,6 +96,7 @@ E 			: E OPERADOR E
 			{
 				string var = addNewVar(), cast1 = "", cast3 = "";
 				string tipo = verificaTipo($1.tipo, $2.operador, $3.tipo);
+				if($2.operador == "+" || $2.operador == "-" || $2.operador == "*" || $2.operador == "/")
 				if($1.tipo != $3.tipo){
 					if(tipo != $1.tipo)
 						cast1 = "("+tipo+") ";
@@ -110,12 +111,9 @@ E 			: E OPERADOR E
 				$$.tipo = tipo;
 			}
 		
+		
 			| E '=' E
 			{	
-				//$1.tipo = verificaTipo($1.tipo, "+", $3.tipo);
-				//string var = addNewVar();
-				//cout<<"= "<<$1.tipo<<" "<<$1.label<<";\n";
-
 				$1.tipo = verificaTipo($1.tipo, "=", $3.tipo);
 				string cast = $3.tipo != $1.tipo ? "("+ $1.tipo +")" : "";
 				$$.traducao = $1.traducao + $3.traducao + "\t" +$1.tipo+" "+ $1.label + " = " + cast+" "+ $3.label + ";\n";
@@ -124,7 +122,6 @@ E 			: E OPERADOR E
 			| TK_INT
 			{
 				string var = addNewVar();
-				//cout<<"NUM "<<$1.tipo<<" "<<$1.label<<";\n";
 
 				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
 
@@ -133,7 +130,6 @@ E 			: E OPERADOR E
 			| TK_CHAR
 			{
 				string var = addNewVar();
-				//cout<<"HAR "<<$1.tipo<<" "<<$1.label<<"\n;";
 
 				$$.traducao = "\t"+$1.tipo+" "+ var + " = "+ $1.label + ";\n";
 
@@ -154,10 +150,8 @@ E 			: E OPERADOR E
 				//Criar tabela para guardar variavel 
 				string var = addNewVar();
 
-				//$$.traducao = "\t"+ $1.traducao+" " + var + ";\n";
 				decl += "\t"+ $1.tipo+" " + var + ";\n";
 				//insere variavel na tabela
-				//cout<<"\ndec::"<<$1.traducao<<"::"<<$1.tipo<<":::\n";
 				addNewVarToTable( $2.label, var, $1.tipo);
 				$$.label = var;
 				$$.tipo = $1.tipo;
@@ -165,10 +159,6 @@ E 			: E OPERADOR E
 			|TK_ID
 			{	
 
-				//cout <<"$1.traducao"<<":"<<$1.label<<":"<<$1.tipo<<":"<<$1.nomeTemp<<":\n";
-				//cout <<"$2.traducao"<<":"<<$2.label<<":"<<$2.tipo<<":"<<$2.nomeTemp<<":\n";
-				//cout <<"$3.traducao"<<":"<<$3.label<<":"<<$3.tipo<<":"<<$3.nomeTemp<<":\n";
-				
 				$$.label = getVar($1.label)->nomeTemp;
 				$$.tipo = getVar($1.label)->tipo;
 				$$.nomeTemp =  $1.label;
@@ -386,4 +376,107 @@ void criaTabelaTipos(){
     TabelaTipos["hex=string"] = "ERRO";
     TabelaTipos["hex=char"] = "ERRO";
     TabelaTipos["hex=hex"] = "hex";
+    
+    //Relacionais
+    TabelaTipos["int>int"] = "bool";
+    TabelaTipos["int>float"] = "bool";
+    TabelaTipos["int>string"] = "ERRO";
+    TabelaTipos["int>char"] = "ERRO"; 
+    TabelaTipos["float>int"] = "bool";
+    TabelaTipos["float>float"] = "bool";
+    TabelaTipos["float>string"] = "ERRO";
+	TabelaTipos["float>char"] = "ERRO";
+    TabelaTipos["string>int"] = "ERRO";
+    TabelaTipos["string>float"] = "ERRO";
+    TabelaTipos["string>string"] = "ERRO";
+    TabelaTipos["string>char"] = "ERRO";
+    TabelaTipos["char>int"] = "ERRO";
+    TabelaTipos["char>float"] = "ERRO";
+    TabelaTipos["char>string"] = "ERRO";
+    TabelaTipos["char>char"] = "ERRO";
+    
+    TabelaTipos["int>=int"] = "bool";
+    TabelaTipos["int>=float"] = "bool";
+    TabelaTipos["int>=string"] = "ERRO";
+    TabelaTipos["int>=char"] = "ERRO"; 
+    TabelaTipos["float>=int"] = "bool";
+    TabelaTipos["float>=float"] = "bool";
+    TabelaTipos["float>=string"] = "ERRO";
+	TabelaTipos["float>=char"] = "ERRO";
+    TabelaTipos["string>=int"] = "ERRO";
+    TabelaTipos["string>=float"] = "ERRO";
+    TabelaTipos["string>=string"] = "ERRO";
+    TabelaTipos["string>=char"] = "ERRO";
+    TabelaTipos["char>=int"] = "ERRO";
+    TabelaTipos["char>=float"] = "ERRO";
+    TabelaTipos["char>=string"] = "ERRO";
+    TabelaTipos["char>=char"] = "ERRO";
+    
+    TabelaTipos["int<int"] = "bool";
+    TabelaTipos["int<float"] = "bool";
+    TabelaTipos["int<string"] = "ERRO";
+    TabelaTipos["int<char"] = "ERRO"; 
+    TabelaTipos["float<int"] = "bool";
+    TabelaTipos["float<float"] = "bool";
+    TabelaTipos["float<string"] = "ERRO";
+	TabelaTipos["float<char"] = "ERRO";
+    TabelaTipos["string<int"] = "ERRO";
+    TabelaTipos["string<float"] = "ERRO";
+    TabelaTipos["string<string"] = "ERRO";
+    TabelaTipos["string<char"] = "ERRO";
+    TabelaTipos["char<int"] = "ERRO";
+    TabelaTipos["char<float"] = "ERRO";
+    TabelaTipos["char<string"] = "ERRO";
+    TabelaTipos["char<char"] = "ERRO";
+    
+    TabelaTipos["int=<int"] = "bool";
+    TabelaTipos["int=<float"] = "bool";
+    TabelaTipos["int=<string"] = "ERRO";
+    TabelaTipos["int=<char"] = "ERRO"; 
+    TabelaTipos["float=<int"] = "bool";
+    TabelaTipos["float=<float"] = "bool";
+    TabelaTipos["float=<string"] = "ERRO";
+	TabelaTipos["float=<char"] = "ERRO";
+    TabelaTipos["string=<int"] = "ERRO";
+    TabelaTipos["string=<float"] = "ERRO";
+    TabelaTipos["string=<string"] = "ERRO";
+    TabelaTipos["string=<char"] = "ERRO";
+    TabelaTipos["char=<int"] = "ERRO";
+    TabelaTipos["char=<float"] = "ERRO";
+    TabelaTipos["char=<string"] = "ERRO";
+    TabelaTipos["char=<char"] = "ERRO";
+    
+    TabelaTipos["int==int"] = "bool";
+    TabelaTipos["int==float"] = "bool";
+    TabelaTipos["int==string"] = "ERRO";
+    TabelaTipos["int==char"] = "ERRO"; 
+    TabelaTipos["float==int"] = "bool";
+    TabelaTipos["float==float"] = "bool";
+    TabelaTipos["float==string"] = "ERRO";
+	TabelaTipos["float==char"] = "ERRO";
+    TabelaTipos["string==int"] = "ERRO";
+    TabelaTipos["string==float"] = "ERRO";
+    TabelaTipos["string==string"] = "ERRO";
+    TabelaTipos["string==char"] = "ERRO";
+    TabelaTipos["char==int"] = "ERRO";
+    TabelaTipos["char==float"] = "ERRO";
+    TabelaTipos["char==string"] = "ERRO";
+    TabelaTipos["char==char"] = "ERRO";
+    
+    TabelaTipos["int!=int"] = "bool";
+    TabelaTipos["int!=float"] = "bool";
+    TabelaTipos["int!=string"] = "ERRO";
+    TabelaTipos["int!=char"] = "ERRO"; 
+    TabelaTipos["float!=int"] = "bool";
+    TabelaTipos["float!=float"] = "bool";
+    TabelaTipos["float!=string"] = "ERRO";
+	TabelaTipos["float!=char"] = "ERRO";
+    TabelaTipos["string!=int"] = "ERRO";
+    TabelaTipos["string!=float"] = "ERRO";
+    TabelaTipos["string!=string"] = "ERRO";
+    TabelaTipos["string!=char"] = "ERRO";
+    TabelaTipos["char!=int"] = "ERRO";
+    TabelaTipos["char!=float"] = "ERRO";
+    TabelaTipos["char!=string"] = "ERRO";
+    TabelaTipos["char!=char"] = "ERRO";
 }
