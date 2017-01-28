@@ -35,29 +35,29 @@ BOOL "true"|"false"
 "string"						{yylval.tipo = "char"; return TK_TIPO_STRING; }
 "bool"       					{yylval.tipo = "int"; return TK_TIPO_BOOL;}
 
-"while" 						{return TK_WHILE; }
-"for" 							{return TK_FOR; }
-"do"							{return TK_DO; }
-"continue"						{return TK_CONTINUE; }
-"break"							{return TK_BREAK; }
+"while" 						{yylval.traducao = yytext; return TK_WHILE; }
+"for" 							{yylval.traducao = yytext; return TK_FOR; }
+"do"							{yylval.traducao = yytext; return TK_DO; }
+"continue"						{yylval.traducao = yytext; return TK_CONTINUE; }
+"break"							{yylval.traducao = yytext; return TK_BREAK; }
 
-"if"							{return TK_IF; }
-"else" 							{return TK_ELSE; }
-"elif"							{return TK_ELIF; }
+"if"							{yylval.traducao = yytext; return TK_IF; }
+"else" 							{yylval.traducao = yytext; return TK_ELSE; }
+"elif"							{yylval.traducao = yytext; return TK_ELIF; }
 
-"func"							{return TK_FUNC;}
-"->"							{return TK_RETORNA;}
-"return"						{return TK_RETURN;}
+"func"							{yylval.traducao = yytext; return TK_FUNC;}
+"->"							{yylval.traducao = yytext; return TK_RETORNA;}
+"return"						{yylval.traducao = yytext; return TK_RETURN;}
 
-"var"							{return TK_VAR;}
-"global"						{return TK_GLOBAL;}
+"var"							{yylval.traducao = yytext; return TK_VAR;}
+"global"						{yylval.traducao = yytext; return TK_GLOBAL;}
 
-"read"							{return TK_READ;}
-"write"							{return TK_WRITE;}
+"read"							{yylval.traducao = yytext; return TK_READ;}
+"write"							{yylval.traducao = yytext; return TK_WRITE;}
 
-"super"							{return TK_SUPER;}
+"super"							{yylval.traducao = yytext; return TK_SUPER;}
 
-[=] 							{return TK_ATRIB;}
+[=] 							{yylval.traducao = yytext; return TK_ATRIBUICAO;}
 
 [<] 							{yylval.traducao = yytext; return TK_MENOR;}
 [>] 							{yylval.traducao = yytext; return TK_MAIOR;}
