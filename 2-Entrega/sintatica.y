@@ -6,6 +6,7 @@
 #include <cassert>
 #include <string>
 #include <sstream>
+#include <vector>
 #include "TabelaTipos.h"
 
 #define YYSTYPE atributos
@@ -21,14 +22,9 @@ struct atributos
     string traducao;
     string tipo;
     string nomeTemp;
-    //string tipoReal;
+    vector<string> colLabels;
     
 };
-/*struct variavel{
-    string label;
-    string tipo;
-};
-variavel *addNewVar(string tipo);*/
 
 class VarNode{
     public: 
@@ -44,6 +40,7 @@ VarNode::VarNode(string a, string b){
 VarNode* getVar(string nomeTemp);
 
 map<string, VarNode*> varTable;
+map<string, VarNode*> labelTable;
 
 //Contagem para tabela de variaveis
 //criar por escopo
@@ -51,10 +48,11 @@ int varCount=0;
 
 
 void criaTabelaTipos();
-void addNewVarToTable(string tipo, string nomeTemp, string varTemp);
+void addNewVarToTable(string nomeTemp, string tipo);
 
 //string verificaTipo(string tipoA, string operador, string tipoB);
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c);
+string verificaTipoAtribuicao(string label1, string operador, string label2);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
 
 string to_string(int i);
@@ -102,7 +100,7 @@ void yyerror(string);
 
 S           : TK_TIPO_INT TK_MAIN '(' ')' BLOCO
             {
-                 cout<< "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n" << $5.traducao << "\treturn 0;\n}" << endl; 
+                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n" << $5.traducao << "\treturn 0;\n}" << endl; 
             }
             ;
 
@@ -146,11 +144,12 @@ OPERACAO    : ARITMETICO
             
 ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             { 
+
                 $$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
                 
             }
             |ARITMETICO2
-            | '('ARITMETICO')' {; 
+            | '('ARITMETICO')' {
 
                 $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;}
             |NUMEROS 
@@ -159,21 +158,24 @@ ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
 
 ARITMETICO2 : ARITs OP_ARITMETICO2 ARITs
             {
+                
                 $$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
                 
             } 
             | '(' ARITMETICO2 ')' { 
+                
                 $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;}
             |NUMEROS 
             ;
 
 ARITs       : ARITMETICO2
-            | '(' ARITMETICO ')'  { 
+            | '(' ARITMETICO ')'  {
+            
                 $$.traducao = $2.traducao; $$.label = $2.label;}
             ;
             
 RELACIONAL	: RELs OP_RELACIONAL RELs	
-			{
+			{    
 				$$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
 			
 			}
@@ -204,7 +206,7 @@ OP_ARITMETICO2  : TK_DIVISAO
 **/
 DECLARA     : TIPO TK_ID // int a
             {
-                addNewVarToTable($2.traducao, geraVar($2.tipo), $2.tipo);
+                addNewVarToTable($2.traducao, $2.tipo);
 
                 //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
                 $$.traducao = "\t"+varTable[$2.traducao]->tipo+" "+varTable[$2.traducao]->nomeTemp +";\n";
@@ -212,17 +214,28 @@ DECLARA     : TIPO TK_ID // int a
             }
             | DECLARA_E_ATRIBUI
             ;
-            
-DECLARA_E_ATRIBUI : TIPO TK_ID TK_ATRIBUICAO NUMEROS// int a
-            {
-                addNewVarToTable($2.traducao, geraVar($2.tipo), $2.tipo);
 
-                //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
-                $$.traducao = "\t"+varTable[$2.traducao]->tipo+" "+varTable[$2.traducao]->nomeTemp +";\n" + // DECLARA
-                $4.traducao + "\t" +getVar($2.traducao)->tipo+" "+getVar($2.traducao)->nomeTemp +" "+$3.traducao+" "+$4.label+";\n"; //ATRIBUI
-                
+/**
+    DECLARAÇÃO com ATRIBUIÇÃO
+**/           
+DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
+            {
+                string aux = "";
+                for (int i = 0; (i < $2.colLabels.size()) ; i++){
+
+                    addNewVarToTable($2.colLabels[i], $2.tipo);
+
+                    //não será necessário essa parte assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa no escopo  qual pertence
+                    aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
+
+                    aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
+
+                }
+
+                $$.traducao = $4.traducao  + aux;
             }
             ;
+
 /**
     ATRIBUIÇÕES
 **/     
@@ -243,7 +256,6 @@ NUMEROS     :  TK_INT
             {
                 $$.label = geraVar($1.tipo);
                 $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
-
             }
             | TK_CHAR
             {
@@ -257,8 +269,8 @@ NUMEROS     :  TK_INT
             }
             | TK_ID
             {
-                $$.label = getVar($1.traducao)->nomeTemp;
-                $$.tipo = getVar($1.traducao)->tipo;
+                $$.label = getVar($1.label)->nomeTemp;
+                $$.tipo = getVar($1.label)->tipo;
             }
             | TK_BOOL
 			{
@@ -267,6 +279,47 @@ NUMEROS     :  TK_INT
 						
 			}
             ;
+
+/**
+    ATRIBUIÇÃO MULTIPLA e PARAMETORS FUNÇÂO
+**/ 
+IDs         : IDs ',' TK_ID 
+            {
+                $$.colLabels = $1.colLabels;
+
+                $$.colLabels.push_back($3.traducao);
+            }
+            | TK_ID 
+            { 
+
+                vector<string> e;
+                $$.colLabels = e;
+                $$.colLabels.push_back($1.traducao); 
+            }
+
+OPs         : OPs ',' OPERACAO  
+            {   
+                $$.traducao = $1.traducao + $3.traducao;
+                $$.colLabels = $1.colLabels;
+                $$.colLabels.push_back($3.label);
+            }
+            | OPERACAO
+            {   
+                vector<string> e;
+                $$.colLabels = e;
+                if ($1.label != "")
+                    $$.colLabels.push_back($$.label);
+                else{
+                    if($1.colLabels.size() > 0){
+                        for (int i = 0; i < $1.colLabels.size(); i++)
+                        {
+                            $$.colLabels.push_back($1.colLabels[i]);
+                        }
+                    }
+                    else
+                        yyerror("ERRO");
+                }
+            }
 
 %%
 
@@ -284,7 +337,6 @@ int main( int argc, char* argv[] )
 
 void yyerror( string MSG )
 {
-    cout << MSG << endl;
     exit (1);
 }   
 
@@ -298,6 +350,9 @@ std::string to_string(int i)
 string geraVar(string tipo){
     //INCLUIR EM BLOCO PARA ESCOPO
     string var =("var" + to_string(varCount++));
+    VarNode *varnode = new VarNode(var, tipo);
+    labelTable[var] = varnode;
+
     return var; 
 }
 /*variavel *addNewVar(string tipo){
@@ -307,12 +362,12 @@ string geraVar(string tipo){
 
     return &var;
 }*/
-void addNewVarToTable(string nomeTemp, string varTemp, string tipo){
+void addNewVarToTable(string nomeTemp, string tipo){
     //verifica se a nova variavel está na tabela
     if(varTable.find(nomeTemp)!=varTable.end()){
         yyerror("error: redeclaration of '"+tipo+" "+nomeTemp+ "'\n");
     }else{
-        varTable[nomeTemp] = new VarNode(varTemp, tipo);
+        varTable[nomeTemp] = labelTable[geraVar(tipo)];
     }
 }
 VarNode* getVar(string nomeTemp){
@@ -320,6 +375,12 @@ VarNode* getVar(string nomeTemp){
         yyerror("error: variavel não foi declarada '"+nomeTemp+ "'\n");
     }
     return varTable[nomeTemp]; 
+}
+VarNode* getLabel(string label){
+    if(labelTable.find(label)==varTable.end()){
+        yyerror("error: variavel temporária inexistente '"+label+ "'\n");
+    }
+    return labelTable[label]; 
 }
 
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
@@ -336,18 +397,35 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
     if(c->tipo != tipo) {
         var = geraVar(tipo);
         rtn += "\t" + tipo + " " + var +" = ";
-        rtn += "("+ tipo +") "+ c->label +"\n";
+        rtn += "("+ tipo +") "+ c->label +";\n";
         c->label = var;
     }
     var = geraVar(tipo);
 
     a->label = var;
-    rtn += "\t" + tipo + " " + var +" = "+ b->label+" "+operador + " "+c->label+"\n";
+    rtn += "\t" + tipo + " " + var +" = "+ b->label+" "+operador + " "+c->label+";\n";
     
     return rtn ;
 }
+string verificaTipoAtribuicao(string label1, string operador, string label2){
+    VarNode *a = getLabel(label1);
+    VarNode *b = getLabel(label2);
 
+    string tipo = buscaTipoTabela(a->tipo, operador, b->tipo);
+    string var = "", rtn = "";
 
+    if(b->tipo != tipo) {
+        var = geraVar(tipo);
+        rtn += "\t" + tipo + " " + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
+        rtn += "\t" + tipo + " " + a->nomeTemp +" = " + var + ";\n";
+        //b->nomeTemp = var;
+    }else{
+         rtn += "\t" + tipo + " " + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
+
+    }
+   
+    return rtn;
+}
 string buscaTipoTabela(string tipoA, string operador, string tipoB){
     if(TabelaTipos.empty()){
         criaTabelaTipos();
