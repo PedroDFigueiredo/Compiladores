@@ -139,8 +139,8 @@ COMANDO     : OPERACAO ';'
             ;
 
 OPERACAO    : ARITMETICO
-//          | LOGICO
-//          | RELACIONAL
+//            | LOGICO
+            | RELACIONAL
 //          | CONCATENACAO
             ;
             
@@ -172,14 +172,25 @@ ARITs       : ARITMETICO2
                 $$.traducao = $2.traducao; $$.label = $2.label;}
             ;
             
+RELACIONAL	: RELs OP_RELACIONAL RELs	
+			{
+				$$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
+			
+			}
+			| '(' RELACIONAL ')' { $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo; }
+			| ARITMETICO;
+			;
+
+RELs 		: RELACIONAL;
+            
             
 
-/*OP_CONCAT         : TK_CONCAT;
+//OP_CONCAT         : TK_CONCAT;
 
-OP_LOGICO       : TK_AND | TK_OR ;
+//OP_LOGICO       : TK_AND | TK_OR ;
 
 OP_RELACIONAL   : TK_DIFERENTE | TK_IGUAL | TK_MENOR | TK_MAIOR ;
-*/
+
 OP_ARITMETICO   : TK_MAIS 
                 | TK_MENOS 
                 | TK_DIVISAO 
@@ -197,6 +208,18 @@ DECLARA     : TIPO TK_ID // int a
 
                 //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
                 $$.traducao = "\t"+varTable[$2.traducao]->tipo+" "+varTable[$2.traducao]->nomeTemp +";\n";
+                
+            }
+            | DECLARA_E_ATRIBUI
+            ;
+            
+DECLARA_E_ATRIBUI : TIPO TK_ID TK_ATRIBUICAO NUMEROS// int a
+            {
+                addNewVarToTable($2.traducao, geraVar($2.tipo), $2.tipo);
+
+                //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
+                $$.traducao = "\t"+varTable[$2.traducao]->tipo+" "+varTable[$2.traducao]->nomeTemp +";\n" + // DECLARA
+                $4.traducao + "\t" +getVar($2.traducao)->tipo+" "+getVar($2.traducao)->nomeTemp +" "+$3.traducao+" "+$4.label+";\n"; //ATRIBUI
                 
             }
             ;
@@ -237,6 +260,12 @@ NUMEROS     :  TK_INT
                 $$.label = getVar($1.traducao)->nomeTemp;
                 $$.tipo = getVar($1.traducao)->tipo;
             }
+            | TK_BOOL
+			{
+				$$.label = geraVar($1.tipo);
+                $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+						
+			}
             ;
 
 %%
@@ -255,7 +284,8 @@ int main( int argc, char* argv[] )
 
 void yyerror( string MSG )
 {
-    exit (0);
+    cout << MSG << endl;
+    exit (1);
 }   
 
 std::string to_string(int i)
@@ -291,6 +321,7 @@ VarNode* getVar(string nomeTemp){
     }
     return varTable[nomeTemp]; 
 }
+
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
     string tipo = buscaTipoTabela(b->tipo, operador, c->tipo);
     string var = "", rtn = "";
@@ -298,7 +329,7 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
     if(b->tipo != tipo) {
         var = geraVar(tipo);
         rtn += "\t" + tipo + " " + var +" = ";
-        rtn += "("+ tipo +") "+ b->label +"\n";
+        rtn += "("+ tipo +") "+ b->label +";\n";
         b->label = var;
     }
 
@@ -315,6 +346,8 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
     
     return rtn ;
 }
+
+
 string buscaTipoTabela(string tipoA, string operador, string tipoB){
     if(TabelaTipos.empty()){
         criaTabelaTipos();
