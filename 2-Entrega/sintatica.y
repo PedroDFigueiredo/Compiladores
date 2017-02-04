@@ -144,6 +144,7 @@ OPERACAO    : ARITMETICO
             
 ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             { 
+                std::cout << "ARITMETICO" << std::endl;
 
                 $$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
                 
@@ -152,7 +153,8 @@ ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             | '('ARITMETICO')' {
 
                 $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;}
-            |NUMEROS 
+            //|NUMEROS 
+            //|TK_ID
             ;
 
 
@@ -166,6 +168,7 @@ ARITMETICO2 : ARITs OP_ARITMETICO2 ARITs
                 
                 $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;}
             |NUMEROS 
+            |TK_ID
             ;
 
 ARITs       : ARITMETICO2
@@ -206,6 +209,7 @@ OP_ARITMETICO2  : TK_DIVISAO
 **/
 DECLARA     : TIPO TK_ID // int a
             {
+                std::cout << "ARITMETICO" << std::endl;
                 addNewVarToTable($2.traducao, $2.tipo);
 
                 //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
@@ -220,6 +224,7 @@ DECLARA     : TIPO TK_ID // int a
 **/           
 DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
             {
+                //std::cout << "entrou no tipo atribuica" << std::endl;
                 string aux = "";
                 for (int i = 0; (i < $2.colLabels.size()) ; i++){
 
@@ -228,8 +233,8 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
                     //não será necessário essa parte assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa no escopo  qual pertence
                     aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
 
+                    //aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
                     aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
-
                 }
 
                 $$.traducao = $4.traducao  + aux;
@@ -240,9 +245,9 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
     ATRIBUIÇÕES
 **/     
 
-ATRIBUICAO  :  TK_ID TK_ATRIBUICAO NUMEROS{
+ATRIBUICAO  :  TK_ID TK_ATRIBUICAO OPERACAO{
                 //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
-                $$.traducao = $3.traducao + "\t" +getVar($1.traducao)->tipo+" "+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+$3.label+";\n";
+                $$.traducao = $3.traducao + "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+$3.label+";\n";
 
             };
 
@@ -365,7 +370,7 @@ string geraVar(string tipo){
 void addNewVarToTable(string nomeTemp, string tipo){
     //verifica se a nova variavel está na tabela
     if(varTable.find(nomeTemp)!=varTable.end()){
-        yyerror("error: redeclaration of '"+tipo+" "+nomeTemp+ "'\n");
+        yyerror("error: redeclaração da variavel '"+tipo+" "+nomeTemp+ "'\n");
     }else{
         varTable[nomeTemp] = labelTable[geraVar(tipo)];
     }
@@ -417,10 +422,13 @@ string verificaTipoAtribuicao(string label1, string operador, string label2){
     if(b->tipo != tipo) {
         var = geraVar(tipo);
         rtn += "\t" + tipo + " " + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
-        rtn += "\t" + tipo + " " + a->nomeTemp +" = " + var + ";\n";
+        //rtn += "\t" + tipo + " " + a->nomeTemp +" = " + var + ";\n";
+        rtn += "\t" + a->nomeTemp +" = " + var + ";\n";
         //b->nomeTemp = var;
-    }else{
-         rtn += "\t" + tipo + " " + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
+    } 
+    else{
+         //rtn += "\t" + tipo + " " + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
+         rtn += "\t" + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
 
     }
    
