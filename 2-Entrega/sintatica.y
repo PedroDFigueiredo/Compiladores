@@ -39,12 +39,28 @@ VarNode::VarNode(string a, string b){
 
 VarNode* getVar(string nomeTemp);
 
+class Escopo{
+    public:
+        int nivel;
+        map<string, VarNode*> *varTable;
+        map<string, VarNode*> *labelTable;
+        Escopo(int);
+
+};
+Escopo::Escopo(int n){
+    nivel = n;
+};
+vector<vector< Escopo*> > list_escopo;
+
 map<string, VarNode*> varTable;
 map<string, VarNode*> labelTable;
 
 //Contagem para tabela de variaveis
 //criar por escopo
 int varCount=0;
+int nivel_escopo = 0;
+void iniEscopo();
+void fimEscopo();
 
 
 void criaTabelaTipos();
@@ -104,9 +120,9 @@ S           : TK_TIPO_INT TK_MAIN '(' ')' BLOCO
             }
             ;
 
-BLOCO		: TK_ABRE COMANDOS TK_FECHA
+BLOCO		: TK_ABRE INI_ESCOPO COMANDOS FIM_ESCOPO TK_FECHA
             {
-                $$.traducao = $2.traducao;
+                $$.traducao = $3.traducao;
             }
             ;
 
@@ -118,10 +134,16 @@ COMANDOS	: COMANDO COMANDOS
             {
                 $$.traducao = $1.traducao;
             }
+            | BLOCO
             ;
 
+INI_ESCOPO: { 
+                iniEscopo();
+            };
+FIM_ESCOPO: { 
+                fimEscopo();
+            };
 
-            
 COMANDO     : OPERACAO ';'
             | NUMEROS ';'
             | DECLARA ';'
@@ -144,7 +166,6 @@ OPERACAO    : ARITMETICO
             
 ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             { 
-                std::cout << "ARITMETICO" << std::endl;
 
                 $$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
                 
@@ -209,7 +230,6 @@ OP_ARITMETICO2  : TK_DIVISAO
 **/
 DECLARA     : TIPO TK_ID // int a
             {
-                std::cout << "ARITMETICO" << std::endl;
                 addNewVarToTable($2.traducao, $2.tipo);
 
                 //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
@@ -226,14 +246,13 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
             {
                 //std::cout << "entrou no tipo atribuica" << std::endl;
                 string aux = "";
-                for (int i = 0; (i < $2.colLabels.size()) ; i++){
+                for (int i = 0; (i < $2.colLabels.size()) && (i < $4.colLabels.size()); i++){
 
                     addNewVarToTable($2.colLabels[i], $2.tipo);
 
                     //não será necessário essa parte assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa no escopo  qual pertence
                     aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
 
-                    //aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
                     aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
                 }
 
@@ -272,11 +291,11 @@ NUMEROS     :  TK_INT
                 $$.label = geraVar($1.tipo);
                 $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
             }
-            | TK_ID
+          /*  | TK_ID
             {
                 $$.label = getVar($1.label)->nomeTemp;
                 $$.tipo = getVar($1.label)->tipo;
-            }
+            }*/
             | TK_BOOL
 			{
 				$$.label = geraVar($1.tipo);
@@ -342,6 +361,7 @@ int main( int argc, char* argv[] )
 
 void yyerror( string MSG )
 {
+    cout<<"ERROR:\n"<<MSG<<"\n";
     exit (1);
 }   
 
@@ -354,7 +374,8 @@ std::string to_string(int i)
 
 string geraVar(string tipo){
     //INCLUIR EM BLOCO PARA ESCOPO
-    string var =("var" + to_string(varCount++));
+ //string var =("var" + to_string(nivel_escopo) +":"+ to_string(varCount++));
+    string var =("var" +  to_string(varCount++));
     VarNode *varnode = new VarNode(var, tipo);
     labelTable[var] = varnode;
 
@@ -445,4 +466,26 @@ string buscaTipoTabela(string tipoA, string operador, string tipoB){
     
     //TabelaTipos[busca]
     return retorno;
+}
+void iniEscopo(){
+    nivel_escopo++;
+
+    Escopo *e = new Escopo(nivel_escopo);
+/*
+    e->varTable = new map<string, VarNode*>;
+    e->labelTable = new map<string, VarNode*>;
+    
+*/
+    if (list_escopo.size() >= nivel_escopo){
+        list_escopo[nivel_escopo].push_back(e);
+    }
+    else{
+        vector<Escopo*> tempVet;
+        tempVet.push_back(e);
+        list_escopo.push_back(tempVet);
+    }
+}
+
+void fimEscopo(){
+    nivel_escopo--;
 }
