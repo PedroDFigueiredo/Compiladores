@@ -42,15 +42,16 @@ VarNode* getVar(string nomeTemp);
 class Escopo{
     public:
         int nivel;
-        map<string, VarNode*> *varTable;
-        map<string, VarNode*> *labelTable;
+        map<string, VarNode*> varTable;
+        map<string, VarNode*> labelTable;
         Escopo(int);
 
 };
 Escopo::Escopo(int n){
     nivel = n;
 };
-vector<vector< Escopo*> > list_escopo;
+//vector<vector< Escopo*> > list_escopo;
+vector< Escopo*> list_escopo;
 
 map<string, VarNode*> varTable;
 map<string, VarNode*> labelTable;
@@ -116,7 +117,16 @@ void yyerror(string);
 
 S           : TK_TIPO_INT TK_MAIN '(' ')' BLOCO
             {
-                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n" << $5.traducao << "\treturn 0;\n}" << endl; 
+
+                string temp = "", aux;
+                for (int i = 0; i < varCount; i++)
+                {
+                    aux = "var" + to_string(i) ;
+                    temp += "\t"+list_escopo[0]->labelTable[aux]->tipo +" "+list_escopo[0]->labelTable[aux]->nomeTemp+";\n";
+                }
+
+
+                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n" <<temp<<"\n\n"<< $5.traducao << "\treturn 0;\n}" << endl; 
             }
             ;
 
@@ -189,7 +199,7 @@ ARITMETICO2 : ARITs OP_ARITMETICO2 ARITs
                 
                 $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;}
             |NUMEROS 
-            |TK_ID
+ //           |TK_ID
             ;
 
 ARITs       : ARITMETICO2
@@ -249,9 +259,8 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
                 for (int i = 0; (i < $2.colLabels.size()) && (i < $4.colLabels.size()); i++){
 
                     addNewVarToTable($2.colLabels[i], $2.tipo);
-
                     //não será necessário essa parte assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa no escopo  qual pertence
-                    aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
+                    //aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
 
                     aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
                 }
@@ -266,7 +275,10 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
 
 ATRIBUICAO  :  TK_ID TK_ATRIBUICAO OPERACAO{
                 //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
-                $$.traducao = $3.traducao + "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+$3.label+";\n";
+                if($3.label != "")
+                    $$.traducao = $3.traducao + "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+$3.label+";\n";
+                else
+                    $$.traducao = "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+getVar($3.traducao)->nomeTemp+";\n";
 
             };
 
@@ -279,27 +291,32 @@ TIPO        : TK_TIPO_STRING
 NUMEROS     :  TK_INT
             {
                 $$.label = geraVar($1.tipo);
-                $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                //$$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                $$.traducao = "\t" + $$.label +" = " + $1.traducao + ";\n";    
             }
             | TK_CHAR
             {
                 $$.label = geraVar($1.tipo);
-                $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                //$$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                $$.traducao = "\t" + $$.label +" = " + $1.traducao + ";\n";    
             }
             | TK_FLOAT
             {
                 $$.label = geraVar($1.tipo);
-                $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                //$$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                $$.traducao = "\t" + $$.label +" = " + $1.traducao + ";\n";    
             }
-          /*  | TK_ID
+            | TK_ID
             {
-                $$.label = getVar($1.label)->nomeTemp;
-                $$.tipo = getVar($1.label)->tipo;
-            }*/
+                $$.label = getVar($1.traducao)->nomeTemp;
+                $$.tipo = getVar($1.traducao)->tipo;
+                $$.traducao = "";
+            }
             | TK_BOOL
 			{
 				$$.label = geraVar($1.tipo);
-                $$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                //$$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                $$.traducao = "\t" + $$.label +" = " + $1.traducao + ";\n";    
 						
 			}
             ;
@@ -379,6 +396,9 @@ string geraVar(string tipo){
     VarNode *varnode = new VarNode(var, tipo);
     labelTable[var] = varnode;
 
+    list_escopo[0]->labelTable[var] = varnode;
+
+
     return var; 
 }
 /*variavel *addNewVar(string tipo){
@@ -415,37 +435,35 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
 
     if(b->tipo != tipo) {
         var = geraVar(tipo);
-        rtn += "\t" + tipo + " " + var +" = ";
+        rtn += "\t" +  var +" = ";
         rtn += "("+ tipo +") "+ b->label +";\n";
         b->label = var;
     }
 
     if(c->tipo != tipo) {
         var = geraVar(tipo);
-        rtn += "\t" + tipo + " " + var +" = ";
+        rtn += "\t" +  var +" = ";
         rtn += "("+ tipo +") "+ c->label +";\n";
         c->label = var;
     }
     var = geraVar(tipo);
 
     a->label = var;
-    rtn += "\t" + tipo + " " + var +" = "+ b->label+" "+operador + " "+c->label+";\n";
+    rtn += "\t" +  var +" = "+ b->label+" "+operador + " "+c->label+";\n";
     
     return rtn ;
 }
 string verificaTipoAtribuicao(string label1, string operador, string label2){
     VarNode *a = getLabel(label1);
     VarNode *b = getLabel(label2);
-
     string tipo = buscaTipoTabela(a->tipo, operador, b->tipo);
     string var = "", rtn = "";
 
     if(b->tipo != tipo) {
         var = geraVar(tipo);
-        rtn += "\t" + tipo + " " + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
-        //rtn += "\t" + tipo + " " + a->nomeTemp +" = " + var + ";\n";
+        //rtn += "\t" + tipo + " " + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
+        rtn += "\t" + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
         rtn += "\t" + a->nomeTemp +" = " + var + ";\n";
-        //b->nomeTemp = var;
     } 
     else{
          //rtn += "\t" + tipo + " " + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
@@ -468,22 +486,27 @@ string buscaTipoTabela(string tipoA, string operador, string tipoB){
     return retorno;
 }
 void iniEscopo(){
-    nivel_escopo++;
+  
 
     Escopo *e = new Escopo(nivel_escopo);
+
+    nivel_escopo++;
 /*
     e->varTable = new map<string, VarNode*>;
     e->labelTable = new map<string, VarNode*>;
     
 */
-    if (list_escopo.size() >= nivel_escopo){
+/*    if (list_escopo.size() >= nivel_escopo){
         list_escopo[nivel_escopo].push_back(e);
     }
     else{
         vector<Escopo*> tempVet;
         tempVet.push_back(e);
         list_escopo.push_back(tempVet);
-    }
+    }*/
+
+    list_escopo.push_back(e);
+
 }
 
 void fimEscopo(){
