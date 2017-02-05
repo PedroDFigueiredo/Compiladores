@@ -28,38 +28,48 @@ struct atributos
 
 class VarNode{
     public: 
+        string nomeTKid; //a, b;
         string nomeTemp; //Var0, Var2;
         string tipo;
-        VarNode(string , string);
+        VarNode(string , string, string);
 };
-VarNode::VarNode(string a, string b){
+VarNode::VarNode(string a, string b, string c){
     nomeTemp = a;
     tipo = b;
+    nomeTKid = c;
 };
-
 VarNode* getVar(string nomeTemp);
+typedef map<string, VarNode*> MapVarNode;
 
 class Escopo{
     public:
         int nivel;
-        map<string, VarNode*> varTable;
-        map<string, VarNode*> labelTable;
+        int profundidade;
+        MapVarNode varTable;
+        MapVarNode labelTable;
+        vector<Escopo*> list_escopo;
+        Escopo *escopoPai;
         Escopo(int);
 
 };
 Escopo::Escopo(int n){
     nivel = n;
 };
-//vector<vector< Escopo*> > list_escopo;
-vector< Escopo*> list_escopo;
+vector<vector< Escopo*> > list_escopo;
+//vector< Escopo*> list_escopo;
+Escopo *EscopoGlobal = new Escopo(0);
+Escopo *EscopoAtual = EscopoGlobal;
 
-map<string, VarNode*> varTable;
-map<string, VarNode*> labelTable;
+
+MapVarNode varTable;
+MapVarNode labelTable;
 
 //Contagem para tabela de variaveis
 //criar por escopo
 int varCount=0;
-int nivel_escopo = 0;
+int nivel_escopo = -1;
+int nivel_escopo2 = 0;
+int profu_escopo = 1;
 void iniEscopo();
 void fimEscopo();
 
@@ -75,8 +85,16 @@ string buscaTipoTabela(string tipoA, string operador, string tipoB);
 string to_string(int i);
 string addNewVar();
 string geraVar(string tipo);
+string geraVar(string tipo, string tkid);
 string decl = "";
 
+//busca variaveis dentro do escopo
+pair<bool, VarNode*> varByTkid(string tkid);
+pair<bool, VarNode*> varByNameTemp(string nomeTemp);
+
+
+//prints declarações variáveis...
+void printDeclarations();
 
 int yylex(void);
 void yyerror(string);
@@ -118,15 +136,9 @@ void yyerror(string);
 S           : TK_TIPO_INT TK_MAIN '(' ')' BLOCO
             {
 
-                string temp = "", aux;
-                for (int i = 0; i < varCount; i++)
-                {
-                    aux = "var" + to_string(i) ;
-                    temp += "\t"+list_escopo[0]->labelTable[aux]->tipo +" "+list_escopo[0]->labelTable[aux]->nomeTemp+";\n";
-                }
-
-
-                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n" <<temp<<"\n\n"<< $5.traducao << "\treturn 0;\n}" << endl; 
+                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n";
+                printDeclarations();
+                cout <<"\n\n"<< $5.traducao << "\treturn 0;\n}" << endl; 
             }
             ;
 
@@ -144,7 +156,6 @@ COMANDOS	: COMANDO COMANDOS
             {
                 $$.traducao = $1.traducao;
             }
-            | BLOCO
             ;
 
 INI_ESCOPO: { 
@@ -166,6 +177,8 @@ COMANDO     : OPERACAO ';'
             | CMD_COUT ';'
             | CMD_CIN ';'
 */
+            | BLOCO
+
             ;
 
 OPERACAO    : ARITMETICO
@@ -240,10 +253,13 @@ OP_ARITMETICO2  : TK_DIVISAO
 **/
 DECLARA     : TIPO TK_ID // int a
             {
+
                 addNewVarToTable($2.traducao, $2.tipo);
 
                 //não será necessário assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa
-                $$.traducao = "\t"+varTable[$2.traducao]->tipo+" "+varTable[$2.traducao]->nomeTemp +";\n";
+                VarNode *var = getVar($2.traducao);
+                //$$.traducao = "\t"+varTable[$2.traducao]->tipo+" "+varTable[$2.traducao]->nomeTemp +";\n";
+                $$.traducao = "\t"+var->tipo+" "+var->nomeTemp +";\n";
                 
             }
             | DECLARA_E_ATRIBUI
@@ -254,7 +270,6 @@ DECLARA     : TIPO TK_ID // int a
 **/           
 DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
             {
-                //std::cout << "entrou no tipo atribuica" << std::endl;
                 string aux = "";
                 for (int i = 0; (i < $2.colLabels.size()) && (i < $4.colLabels.size()); i++){
 
@@ -311,6 +326,7 @@ NUMEROS     :  TK_INT
                 $$.label = getVar($1.traducao)->nomeTemp;
                 $$.tipo = getVar($1.traducao)->tipo;
                 $$.traducao = "";
+
             }
             | TK_BOOL
 			{
@@ -333,6 +349,7 @@ IDs         : IDs ',' TK_ID
             | TK_ID 
             { 
 
+
                 vector<string> e;
                 $$.colLabels = e;
                 $$.colLabels.push_back($1.traducao); 
@@ -346,6 +363,7 @@ OPs         : OPs ',' OPERACAO
             }
             | OPERACAO
             {   
+
                 vector<string> e;
                 $$.colLabels = e;
                 if ($1.label != "")
@@ -390,43 +408,89 @@ std::string to_string(int i)
 }
 
 string geraVar(string tipo){
-    //INCLUIR EM BLOCO PARA ESCOPO
- //string var =("var" + to_string(nivel_escopo) +":"+ to_string(varCount++));
-    string var =("var" +  to_string(varCount++));
-    VarNode *varnode = new VarNode(var, tipo);
-    labelTable[var] = varnode;
+    string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++));
 
-    list_escopo[0]->labelTable[var] = varnode;
+    VarNode *varnode = new VarNode(var, tipo, "");
 
+    //INCLUI EM BLOCO do ESCOPO atual
+    EscopoAtual->labelTable[var] = varnode;
 
     return var; 
 }
-/*variavel *addNewVar(string tipo){
-    variavel var;
-    var.tipo = tipo;
-    var.label = geraVar("");
+string geraVar(string tipo, string tkid){
+    string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++));
 
-    return &var;
-}*/
+    VarNode *varnode = new VarNode(var, tipo, tkid);
+
+    //INCLUI EM BLOCO do ESCOPO atual
+    EscopoAtual->labelTable[var] = varnode;
+    EscopoAtual->varTable[var] = varnode;
+
+    return var; 
+}
+pair<bool, VarNode*> getVarByNameTemp(string nomeTemp){
+    Escopo * e = EscopoAtual;
+    
+    pair<bool, VarNode*> rtn;
+        
+    while(e->escopoPai != 0){
+
+        if(e->labelTable.find(nomeTemp)!=e->labelTable.end()){
+            rtn.first = true;
+            rtn.second = e->labelTable[nomeTemp];
+            return rtn;
+        }
+        e = e->escopoPai;
+    }
+    rtn.first = false;
+
+    return rtn;
+}
+pair<bool, VarNode*> getVarByTkid(string tkid){
+    Escopo * e = EscopoAtual;
+    
+    pair<bool, VarNode*> rtn;
+        
+    while(e->escopoPai != 0){
+
+        if(e->varTable.find(tkid)!=e->varTable.end()){
+            rtn.first = true;
+            rtn.second = e->varTable[tkid];
+            return rtn;
+        }
+        e = e->escopoPai;
+    }
+    rtn.first = false;
+
+    return rtn;
+}
 void addNewVarToTable(string nomeTemp, string tipo){
     //verifica se a nova variavel está na tabela
-    if(varTable.find(nomeTemp)!=varTable.end()){
+    pair<bool, VarNode*> p = getVarByTkid(nomeTemp);
+    if(p.first){
         yyerror("error: redeclaração da variavel '"+tipo+" "+nomeTemp+ "'\n");
     }else{
-        varTable[nomeTemp] = labelTable[geraVar(tipo)];
+        EscopoAtual->varTable[nomeTemp] = EscopoAtual->labelTable[geraVar(tipo, nomeTemp)];
     }
 }
+//busca variavel por tkid
 VarNode* getVar(string nomeTemp){
-    if(varTable.find(nomeTemp)==varTable.end()){
+    pair<bool, VarNode*> p = getVarByTkid(nomeTemp);
+    if(!p.first){
         yyerror("error: variavel não foi declarada '"+nomeTemp+ "'\n");
     }
-    return varTable[nomeTemp]; 
+
+    return p.second;
 }
+//busca variavel por label
 VarNode* getLabel(string label){
-    if(labelTable.find(label)==varTable.end()){
+    pair<bool, VarNode*> p = getVarByNameTemp(label);
+    if(!p.first){
         yyerror("error: variavel temporária inexistente '"+label+ "'\n");
     }
-    return labelTable[label]; 
+
+    return p.second;
+  
 }
 
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
@@ -470,9 +534,9 @@ string verificaTipoAtribuicao(string label1, string operador, string label2){
          rtn += "\t" + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
 
     }
-   
     return rtn;
 }
+//busca na tabela tipo resultante de uma operação
 string buscaTipoTabela(string tipoA, string operador, string tipoB){
     if(TabelaTipos.empty()){
         criaTabelaTipos();
@@ -485,30 +549,44 @@ string buscaTipoTabela(string tipoA, string operador, string tipoB){
     //TabelaTipos[busca]
     return retorno;
 }
+
 void iniEscopo(){
-  
-
-    Escopo *e = new Escopo(nivel_escopo);
-
+        
     nivel_escopo++;
-/*
-    e->varTable = new map<string, VarNode*>;
-    e->labelTable = new map<string, VarNode*>;
+    nivel_escopo2++;
+    Escopo *e = new Escopo(nivel_escopo2);
+    Escopo *f = e;
+    e->profundidade = profu_escopo;
+    profu_escopo++;
     
-*/
-/*    if (list_escopo.size() >= nivel_escopo){
-        list_escopo[nivel_escopo].push_back(e);
-    }
-    else{
-        vector<Escopo*> tempVet;
-        tempVet.push_back(e);
-        list_escopo.push_back(tempVet);
-    }*/
 
-    list_escopo.push_back(e);
+    EscopoAtual->list_escopo.push_back(e);
+    e->escopoPai = EscopoAtual;
+    EscopoAtual = e;
 
 }
-
 void fimEscopo(){
     nivel_escopo--;
+    EscopoAtual = EscopoAtual->escopoPai;
 }
+void printDeclarations(Escopo *esc){
+    string temp = "";
+
+    for (int i = 0; i< esc->list_escopo.size(); ++i){
+        temp="";
+        for( MapVarNode::const_iterator it = esc->list_escopo[i]->labelTable.begin(); it != esc->list_escopo[i]->labelTable.end(); ++it ){
+            temp += "\t"+it->second->tipo +" "+it->second->nomeTemp+"; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
+        }
+        cout<<temp;
+        printDeclarations(esc->list_escopo[i]);
+        
+    }
+
+
+}
+void printDeclarations(){
+    
+    printDeclarations(EscopoGlobal);
+   
+}
+
