@@ -171,7 +171,7 @@ COMANDO     : OPERACAO ';'
             ;
 
 OPERACAO    : ARITMETICO
-//            | LOGICO
+            //| LOGICO
             | RELACIONAL
 //          | CONCATENACAO
             ;
@@ -285,7 +285,7 @@ ATRIBUICAO  :  TK_ID TK_ATRIBUICAO OPERACAO{
                 if($3.label != ""){
                     //if()
                     //verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
-                    std::cout << verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label)  << std::endl;
+                    //std::cout << verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label)  << std::endl;
                     aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label);
                     
                     $$.traducao = $3.traducao + aux;
@@ -385,11 +385,6 @@ int yyparse();
 
 int main( int argc, char* argv[] )
 {   
-    	bool b;
-	b = (10 > 20) > -10;
-	
-	cout<<"b:"<<b<<"\n";
-	
     yyparse();
     //for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
 
