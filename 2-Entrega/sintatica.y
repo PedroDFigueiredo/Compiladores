@@ -69,6 +69,7 @@ void addNewVarToTable(string nomeTemp, string tipo);
 
 //string verificaTipo(string tipoA, string operador, string tipoB);
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c);
+string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoAtribuicao(string label1, string operador, string label2);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
 
@@ -159,6 +160,7 @@ COMANDO     : OPERACAO ';'
             | DECLARA ';'
             | ATRIBUICAO ';'
 /*          | FUNCAO
+
             | BREAK ';'
             | CONTINUE ';'
             | SUPERBREAK ';'
@@ -210,7 +212,7 @@ ARITs       : ARITMETICO2
             
 RELACIONAL	: RELs OP_RELACIONAL RELs	
 			{    
-				$$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
+				$$.traducao = $1.traducao + $3.traducao + verificaTipoRelacional(&$$, &$1, $2.traducao, &$3);
 			
 			}
 			| '(' RELACIONAL ')' { $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo; }
@@ -274,11 +276,22 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
 **/     
 
 ATRIBUICAO  :  TK_ID TK_ATRIBUICAO OPERACAO{
+    
+            //Para pegar a variável do tk_id TK_ID
+            //std::cout << "$1 " << getVar($1.traducao)->nomeTemp << "  $Operacao " << $3.label << std::endl; //verfica se mome da variavel já foi declarado e retorna nome temporário
+            
+            string aux = "";
                 //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
-                if($3.label != "")
-                    $$.traducao = $3.traducao + "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+$3.label+";\n";
+                if($3.label != ""){
+                    //if()
+                    //verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
+                    std::cout << verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label)  << std::endl;
+                    aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label);
+                    
+                    $$.traducao = $3.traducao + aux;
+                }
                 else
-                    $$.traducao = "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+getVar($3.traducao)->nomeTemp+";\n";
+                    $$.traducao = "\t teste"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+getVar($3.traducao)->nomeTemp+";\n";
 
             };
 
@@ -308,9 +321,11 @@ NUMEROS     :  TK_INT
             }
             | TK_ID
             {
-                $$.label = getVar($1.traducao)->nomeTemp;
-                $$.tipo = getVar($1.traducao)->tipo;
+                
+                $$.label = getVar($1.traducao)->nomeTemp; //verfica se mome da variavel já foi declarado e retorna nome temporário
+                $$.tipo = getVar($1.traducao)->tipo; //verfica se mome da variavel já foi declarado e retorna tipo
                 $$.traducao = "";
+                //std::cout <<  $$.label  << std::endl;
             }
             | TK_BOOL
 			{
@@ -370,6 +385,11 @@ int yyparse();
 
 int main( int argc, char* argv[] )
 {   
+    	bool b;
+	b = (10 > 20) > -10;
+	
+	cout<<"b:"<<b<<"\n";
+	
     yyparse();
     //for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
 
@@ -453,10 +473,39 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
     
     return rtn ;
 }
+
+string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c){
+    string tipo = buscaTipoTabela(b->tipo, operador, c->tipo); 
+    std::cout << tipo << std::endl;
+    string var = "", rtn = "";
+/*
+    if(b->tipo != tipo) {
+        var = geraVar(tipo);
+        rtn += "\t" +  var +" = ";
+        rtn += "("+ tipo +") "+ b->label +";\n";
+        b->label = var;
+    }
+
+    if(c->tipo != tipo) {
+        var = geraVar(tipo);
+        rtn += "\t" +  var +" = ";
+        rtn += "("+ tipo +") "+ c->label +";\n";
+        c->label = var;
+    }
+*/
+    var = geraVar(tipo);
+
+    a->label = var;
+    rtn += "\t" +  var +" = "+ b->label+" "+operador + " "+c->label+";\n";
+    
+    return rtn ;
+}
+
 string verificaTipoAtribuicao(string label1, string operador, string label2){
     VarNode *a = getLabel(label1);
     VarNode *b = getLabel(label2);
     string tipo = buscaTipoTabela(a->tipo, operador, b->tipo);
+    //std::cout << "tipo: " <<tipo << std::endl;
     string var = "", rtn = "";
 
     if(b->tipo != tipo) {
