@@ -22,6 +22,7 @@ struct atributos
     string traducao;
     string tipo;
     string nomeTemp;
+    int tamString;
     vector<string> colLabels;
     
 };
@@ -82,6 +83,8 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoAtribuicao(string label1, string operador, string label2);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
+string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c);
+string geraVarString(atributos *a);
 
 string to_string(int i);
 string addNewVar();
@@ -112,7 +115,7 @@ void yyerror(string);
 //TIPOS
 %token TK_TIPO_STRING TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL TK_TIPO_INT
 //VALORES
-%token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STR
+%token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STRING
 //Condicionais e loops
 %token TK_WHILE TK_FOR TK_SWITCH TK_CASE TK_IF TK_ELSE TK_ELIF
 %token TK_BREAK TK_CONTINUE TK_DO TK_DEFAUT
@@ -184,7 +187,7 @@ COMANDO     : OPERACAO ';'
             ;
 
 OPERACAO    : ARITMETICO
-            //| LOGICO
+            | LOGICO
             | RELACIONAL
 //          | CONCATENACAO
             ;
@@ -233,12 +236,22 @@ RELACIONAL	: RELs OP_RELACIONAL RELs
 			;
 
 RELs 		: RELACIONAL;
+
+LOGICO		: LOGs OP_LOGICO LOGs
+			{ 
+                $$.traducao = $1.traducao + $3.traducao + verificaTipoLogico(&$$, &$1, $2.traducao, &$3);
+			}
+			| '(' LOGICO ')' { $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;  }
+			;
+
+LOGs 		: LOGICO | RELACIONAL ;
+
             
             
 
 //OP_CONCAT         : TK_CONCAT;
 
-//OP_LOGICO       : TK_AND | TK_OR ;
+OP_LOGICO       : TK_AND | TK_OR ;
 
 OP_RELACIONAL   : TK_DIFERENTE | TK_IGUAL | TK_MENOR | TK_MAIOR ;
 
@@ -341,6 +354,14 @@ NUMEROS     :  TK_INT
                 $$.traducao = "";
 
             }
+            | TK_STRING
+			{
+			    $1.tamString = $$.traducao.length()-1; //Pega o tamanho da string menos 1;
+			    $$.label = geraVarString(&$1);
+			    //std::cout << "Teste: " << $1.traducao << $$.label << std::endl;
+			    $$.traducao = "\t" + $$.label +" = " + $1.traducao + ";\n";
+			    
+			}
             | TK_BOOL
 			{
 				$$.label = geraVar($1.tipo);
@@ -401,6 +422,18 @@ int yyparse();
 
 int main( int argc, char* argv[] )
 {   
+    int x;
+    
+    string var0_0[7]; 
+
+
+	// = "teste";
+
+
+    //x = (10 || 20);
+    
+    //x = (0 or 1);
+    //std::cout << "logico: " << nome << std::endl;
     yyparse();
     //for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
 
@@ -424,6 +457,21 @@ string geraVar(string tipo){
     string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++));
 
     VarNode *varnode = new VarNode(var, tipo, "");
+
+    //INCLUI EM BLOCO do ESCOPO atual
+    EscopoAtual->labelTable[var] = varnode;
+
+    return var; 
+}
+
+string geraVarString(atributos *a){
+   // std::cout << a->tamString << std::endl;
+    //strcpy(dest, src);
+    
+    string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++) );
+    //string varTamVetor = var + "[" + to_string(a->tamString) + "]";
+
+    VarNode *varnode = new VarNode(var, "string", "");
 
     //INCLUI EM BLOCO do ESCOPO atual
     EscopoAtual->labelTable[var] = varnode;
@@ -558,6 +606,20 @@ string verificaTipoRelacional(atributos *a, atributos *b,string operador, atribu
     return rtn ;
 }
 
+string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c){
+    string tipo = "bool"; //buscaTipoTabela(b->tipo, operador, c->tipo); 
+  
+    string var = "", rtn = "";
+    
+    var = geraVar(tipo);
+
+    a->label = var;
+    rtn += "\t" +  var +" = "+ b->label+" "+operador + " "+c->label+";\n";
+    
+    return rtn ;
+}
+
+
 string verificaTipoAtribuicao(string label1, string operador, string label2){
     VarNode *a = getLabel(label1);
     VarNode *b = getLabel(label2);
@@ -617,7 +679,7 @@ void printDeclarations(Escopo *esc){
     for (int i = 0; i< esc->list_escopo.size(); ++i){
         temp="";
         for( MapVarNode::const_iterator it = esc->list_escopo[i]->labelTable.begin(); it != esc->list_escopo[i]->labelTable.end(); ++it ){
-            temp += "\t"+it->second->tipo +" "+it->second->nomeTemp+"; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
+            temp += "\t"+it->second->tipo +" "+it->second->nomeTemp+ "; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
         }
         cout<<temp;
         printDeclarations(esc->list_escopo[i]);

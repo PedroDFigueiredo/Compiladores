@@ -91,7 +91,7 @@ BOOL "true"|"false"
 {FLOAT}		{yylval.traducao = yytext; yylval.tipo = "float"; return TK_FLOAT; }
 {CHAR}		{yylval.traducao = yytext; yylval.tipo = "char"; return TK_CHAR; }
 {BOOL}		{yylval.traducao = yytext; yylval.tipo = "bool"; return TK_BOOL; } 
-{STRING} 	{yylval.traducao = yytext; yylval.tipo = "char";  return TK_STR; }
+{STRING} 	{yylval.traducao = yytext; yylval.tipo = "string";  return TK_STRING; }
 {TK_ID}		{yylval.traducao = yytext; return TK_ID; }
 
 
