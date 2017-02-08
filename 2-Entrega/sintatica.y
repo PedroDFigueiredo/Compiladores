@@ -45,8 +45,11 @@ class Escopo{
     public:
         int nivel;
         int profundidade;
+        bool isCondicional;
+        string labelInicio;
+        string labelFim;
+        MapVarNode tkIdTable;
         MapVarNode varTable;
-        MapVarNode labelTable;
         vector<Escopo*> list_escopo;
         Escopo *escopoPai;
         Escopo(int);
@@ -55,21 +58,19 @@ class Escopo{
 Escopo::Escopo(int n){
     nivel = n;
 };
-vector<vector< Escopo*> > list_escopo;
+
 //vector< Escopo*> list_escopo;
 Escopo *EscopoGlobal = new Escopo(0);
 Escopo *EscopoAtual = EscopoGlobal;
 
 
-MapVarNode varTable;
-MapVarNode labelTable;
-
 //Contagem para tabela de variaveis
 //criar por escopo
 int varCount=0;
-int nivel_escopo = -1;
-int nivel_escopo2 = 0;
+int nivel_escopo = 0;
 int profu_escopo = 1;
+int labelCount = 0;
+
 void iniEscopo();
 void fimEscopo();
 
@@ -96,6 +97,8 @@ pair<bool, VarNode*> varByNameTemp(string nomeTemp);
 
 //prints declarações variáveis...
 void printDeclarations();
+
+pair<string,string> geraLabelEscopo();
 
 int yylex(void);
 void yyerror(string);
@@ -147,6 +150,10 @@ BLOCO		: TK_ABRE INI_ESCOPO COMANDOS FIM_ESCOPO TK_FECHA
             {
                 $$.traducao = $3.traducao;
             }
+            | TK_ABRE INI_ESCOPO FIM_ESCOPO TK_FECHA //escopo vazio
+            {
+                $$.traducao = "";
+            }
             ;
 
 COMANDOS	: COMANDO COMANDOS
@@ -170,8 +177,13 @@ COMANDO     : OPERACAO ';'
             | NUMEROS ';'
             | DECLARA ';'
             | ATRIBUICAO ';'
-/*          | FUNCAO
+            | BLOCO
+            | CONDICIONAL
+            | LOOP
+/*          
 
+            | CONDICIONAL_ELSE
+            | FUNCAO
             | BREAK ';'
             | CONTINUE ';'
             | SUPERBREAK ';'
@@ -179,7 +191,6 @@ COMANDO     : OPERACAO ';'
             | CMD_COUT ';'
             | CMD_CIN ';'
 */
-            | BLOCO
 
             ;
 
@@ -391,7 +402,99 @@ OPs         : OPs ',' OPERACAO
                     else
                         yyerror("ERRO");
                 }
+            };
+
+/**
+    CONDICIONAIS
+**/
+
+ CONDICIONAL : TK_IF '(' RELACIONAL ')' BLOCO {
+                //cout<<"CONDICIONAL : TK_IF\n";
+                string aux = $3.traducao;
+                aux += "\n\tif (!("+ $3.label +")) goto " + EscopoAtual->labelFim +";"; 
+                aux += "\n" + $5.traducao +"\n";
+                aux += "\n\t" + EscopoAtual->labelFim+":\n"; 
+
+                $$.traducao = aux;
+            
+            } 
+            | CONDICIONAL_ELSE;
+
+CONDICIONAL_ELSE : TK_IF '(' RELACIONAL ')' BLOCO ELSE{
+                //cout<<"CONDICIONAL : TK_IF\n";
+                string label = geraLabelEscopo().second;
+                string aux = $3.traducao;
+                aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+                aux += "\n" + $5.traducao ;
+                aux += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+
+                aux += "\n\t" + label+":";
+                aux += "\n" + $6.traducao+"\n";
+
+                aux += "\n " + EscopoAtual->labelFim + "_" + to_string(nivel_escopo) +":\n\n";
+
+                $$.traducao = aux;
+            
+            }; 
+ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO ELSE{
+
+                
+                string label = geraLabelEscopo().second;
+                string aux = $3.traducao;
+                aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+                aux += "\n" + $5.traducao ;
+                aux += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+
+                aux += "\n\t" + label+":";
+
+               // aux += "\n " + label+ "_" + to_string(nivel_escopo) +":\n\n";
+                 aux += "\n" + $6.traducao+"\n";
+
+                $$.traducao = aux;
+
             }
+            |TK_ELIF '(' RELACIONAL ')' BLOCO {
+                
+                string label = geraLabelEscopo().second;
+                string aux = $3.traducao;
+                aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+                aux += "\n" + $5.traducao ;
+                aux += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+
+                aux += "\n\t" + label+":";
+
+               // aux += "\n " + label+ "_" + to_string(nivel_escopo) +":\n\n";
+                 //aux += "\n" + $6.traducao+"\n";
+
+                $$.traducao = aux;                
+            }
+            | TK_ELSE BLOCO{
+
+                $$.traducao = $2.traducao ;
+
+            } ;
+
+/**
+    LOOPs
+**/
+
+LOOP : TK_WHILE '(' RELACIONAL ')' BLOCO{
+
+            string label = geraLabelEscopo().second;
+
+            string aux = "";
+
+            aux += "\n"+ EscopoAtual->labelInicio + ":\n";    
+            aux += $3.traducao;
+            aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+            aux += "\n" + $5.traducao ;
+
+            aux += "\n goto " + EscopoAtual->labelInicio +";\n";
+
+            aux += "\n" + label +":\n";
+            $$.traducao = aux;                
+
+        };
 
 %%
 
@@ -402,7 +505,7 @@ int yyparse();
 int main( int argc, char* argv[] )
 {   
     yyparse();
-    //for (map<string,VarNode*>::iterator it=varTable.begin(); it!=varTable.end(); ++it)
+    //for (map<string,VarNode*>::iterator it=tkIdTable.begin(); it!=tkIdTable.end(); ++it)
 
     return 0;
 }
@@ -426,7 +529,7 @@ string geraVar(string tipo){
     VarNode *varnode = new VarNode(var, tipo, "");
 
     //INCLUI EM BLOCO do ESCOPO atual
-    EscopoAtual->labelTable[var] = varnode;
+    EscopoAtual->varTable[var] = varnode;
 
     return var; 
 }
@@ -436,8 +539,8 @@ string geraVar(string tipo, string tkid){
     VarNode *varnode = new VarNode(var, tipo, tkid);
 
     //INCLUI EM BLOCO do ESCOPO atual
-    EscopoAtual->labelTable[var] = varnode;
     EscopoAtual->varTable[var] = varnode;
+    EscopoAtual->tkIdTable[var] = varnode;
 
     return var; 
 }
@@ -448,9 +551,9 @@ pair<bool, VarNode*> getVarByNameTemp(string nomeTemp){
         
     while(e->escopoPai != 0){
 
-        if(e->labelTable.find(nomeTemp)!=e->labelTable.end()){
+        if(e->varTable.find(nomeTemp)!=e->varTable.end()){
             rtn.first = true;
-            rtn.second = e->labelTable[nomeTemp];
+            rtn.second = e->varTable[nomeTemp];
             return rtn;
         }
         e = e->escopoPai;
@@ -466,9 +569,9 @@ pair<bool, VarNode*> getVarByTkid(string tkid){
         
     while(e->escopoPai != 0){
 
-        if(e->varTable.find(tkid)!=e->varTable.end()){
+        if(e->tkIdTable.find(tkid)!=e->tkIdTable.end()){
             rtn.first = true;
-            rtn.second = e->varTable[tkid];
+            rtn.second = e->tkIdTable[tkid];
             return rtn;
         }
         e = e->escopoPai;
@@ -483,7 +586,7 @@ void addNewVarToTable(string nomeTemp, string tipo){
     if(p.first){
         yyerror("error: redeclaração da variavel '"+tipo+" "+nomeTemp+ "'\n");
     }else{
-        EscopoAtual->varTable[nomeTemp] = EscopoAtual->labelTable[geraVar(tipo, nomeTemp)];
+        EscopoAtual->tkIdTable[nomeTemp] = EscopoAtual->varTable[geraVar(tipo, nomeTemp)];
     }
 }
 //busca variavel por tkid
@@ -533,7 +636,6 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
 
 string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c){
     string tipo = buscaTipoTabela(b->tipo, operador, c->tipo); 
-    std::cout << tipo << std::endl;
     string var = "", rtn = "";
 /*
     if(b->tipo != tipo) {
@@ -595,13 +697,17 @@ string buscaTipoTabela(string tipoA, string operador, string tipoB){
 void iniEscopo(){
         
     nivel_escopo++;
-    nivel_escopo2++;
-    Escopo *e = new Escopo(nivel_escopo2);
-    Escopo *f = e;
+    Escopo *e = new Escopo(nivel_escopo);
+
+    pair<string,string> p = geraLabelEscopo()    ;
+
+    e->isCondicional = false;
+    e->labelInicio = p.first;
+    e->labelFim = p.second;
+
     e->profundidade = profu_escopo;
     profu_escopo++;
     
-
     EscopoAtual->list_escopo.push_back(e);
     e->escopoPai = EscopoAtual;
     EscopoAtual = e;
@@ -616,7 +722,7 @@ void printDeclarations(Escopo *esc){
 
     for (int i = 0; i< esc->list_escopo.size(); ++i){
         temp="";
-        for( MapVarNode::const_iterator it = esc->list_escopo[i]->labelTable.begin(); it != esc->list_escopo[i]->labelTable.end(); ++it ){
+        for( MapVarNode::const_iterator it = esc->list_escopo[i]->varTable.begin(); it != esc->list_escopo[i]->varTable.end(); ++it ){
             temp += "\t"+it->second->tipo +" "+it->second->nomeTemp+"; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
         }
         cout<<temp;
@@ -632,3 +738,14 @@ void printDeclarations(){
    
 }
 
+pair<string,string> geraLabelEscopo(){
+    pair<string, string> r;
+    r.first = "INI_"+to_string(labelCount);
+    r.second = "FIM_"+to_string(labelCount);
+    labelCount++;
+
+    return r;
+}
+string getLabelEscopoFim(){
+    return EscopoAtual->labelFim;
+}

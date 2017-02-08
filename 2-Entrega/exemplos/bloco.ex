@@ -10,7 +10,9 @@ int main(){
 				int cc;
 			}
 			{
-				bool ccc = 1.0 > 15;
+				bool ccc = 1.0 == 15;
+
+
 			}
 		}
 	}
