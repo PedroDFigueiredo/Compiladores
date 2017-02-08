@@ -31,12 +31,14 @@ class VarNode{
         string nomeTKid; //a, b;
         string nomeTemp; //Var0, Var2;
         string tipo;
-        VarNode(string , string, string);
+        int tamString;
+        VarNode(string , string, string, int);
 };
-VarNode::VarNode(string a, string b, string c){
+VarNode::VarNode(string a, string b, string c, int d = 0){
     nomeTemp = a;
     tipo = b;
     nomeTKid = c;
+    tamString = d;
 };
 VarNode* getVar(string nomeTemp);
 typedef map<string, VarNode*> MapVarNode;
@@ -83,6 +85,9 @@ string verificaTipo(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoAtribuicao(string label1, string operador, string label2);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
+string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c);
+string geraVarString(atributos *a);
+string geraVarSubrescritaString(string a, string b);
 
 string to_string(int i);
 string addNewVar();
@@ -115,7 +120,7 @@ void yyerror(string);
 //TIPOS
 %token TK_TIPO_STRING TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL TK_TIPO_INT
 //VALORES
-%token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STR
+%token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STRING
 //Condicionais e loops
 %token TK_WHILE TK_FOR TK_SWITCH TK_CASE TK_IF TK_ELSE TK_ELIF
 %token TK_BREAK TK_CONTINUE TK_DO TK_DEFAUT
@@ -195,7 +200,7 @@ COMANDO     : OPERACAO ';'
             ;
 
 OPERACAO    : ARITMETICO
-            //| LOGICO
+            | LOGICO
             | RELACIONAL
 //          | CONCATENACAO
             ;
@@ -244,12 +249,22 @@ RELACIONAL	: RELs OP_RELACIONAL RELs
 			;
 
 RELs 		: RELACIONAL;
+
+LOGICO		: LOGs OP_LOGICO LOGs
+			{ 
+                $$.traducao = $1.traducao + $3.traducao + verificaTipoLogico(&$$, &$1, $2.traducao, &$3);
+			}
+			| '(' LOGICO ')' { $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;  }
+			;
+
+LOGs 		: LOGICO | RELACIONAL ;
+
             
             
 
 //OP_CONCAT         : TK_CONCAT;
 
-//OP_LOGICO       : TK_AND | TK_OR ;
+OP_LOGICO       : TK_AND | TK_OR ;
 
 OP_RELACIONAL   : TK_DIFERENTE | TK_IGUAL | TK_MENOR | TK_MAIOR ;
 
@@ -352,6 +367,14 @@ NUMEROS     :  TK_INT
                 $$.traducao = "";
 
             }
+            | TK_STRING
+			{
+			    //$1.tamString = $$.traducao.length()-1; //Pega o tamanho da string menos 1;
+			    $$.label = geraVarString(&$1);
+			    //std::cout << "Teste: " << $1.traducao << $$.label << std::endl;
+			    $$.traducao = "\tstrcpy (" + $$.label + "," + $1.traducao + ");\n";
+			    
+			}
             | TK_BOOL
 			{
 				$$.label = geraVar($1.tipo);
@@ -504,6 +527,25 @@ int yyparse();
 
 int main( int argc, char* argv[] )
 {   
+   
+	 char var0_0[6]; 
+
+
+	strcpy (var0_0,"teste");
+    //string var0_0[6]; 
+
+
+	//strcpy (var0_0,"teste");
+	
+
+
+	// = "teste";
+
+
+    //x = (10 || 20);
+    
+    //x = (0 or 1);
+    std::cout << "logico: " << var0_0 << std::endl;
     yyparse();
     //for (map<string,VarNode*>::iterator it=tkIdTable.begin(); it!=tkIdTable.end(); ++it)
 
@@ -533,6 +575,28 @@ string geraVar(string tipo){
 
     return var; 
 }
+
+string geraVarString(atributos *a){
+   // std::cout << a->tamString << std::endl;
+    //strcpy(dest, src);
+    int tamString;
+    
+    string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++) );
+    tamString = a->traducao.length()-1; //Pega o tamanho da string menos 1;
+    std::cout <<  tamString << std::endl;
+    //string varTamVetor = var + "[" + to_string(a->tamString) + "]";
+
+    VarNode *varnode = new VarNode(var, "string", "", tamString);
+
+    //INCLUI EM BLOCO do ESCOPO atual
+    EscopoAtual->varTable[var] = varnode;
+
+    return var; 
+}
+
+
+
+
 string geraVar(string tipo, string tkid){
     string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++));
 
@@ -660,6 +724,20 @@ string verificaTipoRelacional(atributos *a, atributos *b,string operador, atribu
     return rtn ;
 }
 
+string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c){
+    string tipo = "bool"; //buscaTipoTabela(b->tipo, operador, c->tipo); 
+  
+    string var = "", rtn = "";
+    
+    var = geraVar(tipo);
+
+    a->label = var;
+    rtn += "\t" +  var +" = "+ b->label+" "+operador + " "+c->label+";\n";
+    
+    return rtn ;
+}
+
+
 string verificaTipoAtribuicao(string label1, string operador, string label2){
     VarNode *a = getLabel(label1);
     VarNode *b = getLabel(label2);
@@ -675,11 +753,42 @@ string verificaTipoAtribuicao(string label1, string operador, string label2){
     } 
     else{
          //rtn += "\t" + tipo + " " + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
-         rtn += "\t" + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
+         if(a->tipo == "string") //caso seja string é necessário utilizar o strcpy;
+         { 
+             geraVarSubrescritaString(a->nomeTemp, b->nomeTemp);
+             rtn += "\tstrcpy (" + a->nomeTemp + "," + b->nomeTemp  + ");\n";
+         }
+         else
+         {
+             rtn += "\t" + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
+         }
+         
 
     }
     return rtn;
 }
+
+string geraVarSubrescritaString(string varA, string varB){
+    VarNode *a = getLabel(varA);
+    VarNode *b = getLabel(varB);
+ 
+    int tamString = b->tamString; //Pega o tamanho da string menos 1;
+     
+    //std::cout << b->tamString << std::endl;
+    string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++) );
+    string varTamVetor = var + "[" + to_string(tamString) + "]";
+    a->tamString = tamString;
+    
+    //a->nomeTemp = var;
+
+    //VarNode *varnode = new VarNode(var, "string", "", tamString);
+
+    //INCLUI EM BLOCO do ESCOPO atual
+    //EscopoAtual->labelTable[var] = varnode;
+
+    return "sas"; 
+}
+
 //busca na tabela tipo resultante de uma operação
 string buscaTipoTabela(string tipoA, string operador, string tipoB){
     if(TabelaTipos.empty()){
@@ -722,8 +831,13 @@ void printDeclarations(Escopo *esc){
 
     for (int i = 0; i< esc->list_escopo.size(); ++i){
         temp="";
+
         for( MapVarNode::const_iterator it = esc->list_escopo[i]->varTable.begin(); it != esc->list_escopo[i]->varTable.end(); ++it ){
-            temp += "\t"+it->second->tipo +" "+it->second->nomeTemp+"; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
+            temp += "\t"
+                    + (it->second->tipo != "string" ? it->second->tipo : "char") +" " //Se tipo for string é necessário transformar para char na declaração
+                    + it->second->nomeTemp
+                    + (it->second->tamString > 0 ? "[" + to_string(it->second->tamString) + "]" : "") //verifica se é string, se for define o tamanho
+                    + "; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
         }
         cout<<temp;
         printDeclarations(esc->list_escopo[i]);

@@ -1,3 +1,4 @@
+logico: teste
 
 
 
@@ -55,7 +56,7 @@ int main(void)
 	int var2_21; 
 
 
-	var1_0 = 1;
+	var1_0 = 111;
 	var1_1 = var1_0;
 	var1_2 = 110;
 	var1_3 = var1_2;
@@ -125,10 +126,6 @@ int main(void)
 
 
  FIM_0_1:
-
-
-
-cout<<"C:"<<var1_5<<"\n";
 
 	return 0;
 }

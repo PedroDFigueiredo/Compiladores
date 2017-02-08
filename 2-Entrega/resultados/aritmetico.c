@@ -1,3 +1,4 @@
+logico: teste
 
 
 
@@ -10,24 +11,24 @@
 using namespace std;
 int main(void)
 {
-	int var0_0; 
-	int var0_1;  //variavel: a
-	int var0_2; 
-	int var0_3;  //variavel: c
-	int var0_4;  //variavel: b
-	int var0_5; 
-	int var0_6; 
-	int var0_7; 
+	int var1_0; 
+	int var1_1;  //variavel: a
+	int var1_2; 
+	int var1_3;  //variavel: c
+	int var1_4;  //variavel: b
+	int var1_5; 
+	int var1_6; 
+	int var1_7; 
 
 
-	var0_0 = 10;
-	var0_1 = var0_0;
-	var0_2 = 20;
-	var0_3 = var0_2;
-	var0_5 = 10;
-	var0_6 = var0_3 + var0_5;
-	var0_7 = var0_1 * var0_6;
-	var0_4 = var0_7;
+	var1_0 = 10;
+	var1_1 = var1_0;
+	var1_2 = 20;
+	var1_3 = var1_2;
+	var1_5 = 10;
+	var1_6 = var1_3 + var1_5;
+	var1_7 = var1_1 * var1_6;
+	var1_4 = var1_7;
 	return 0;
 }
 

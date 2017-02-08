@@ -7,7 +7,7 @@ int main(){
 		{
 			int c;
 			{
-				int cc;
+				c=1;
 			}
 			{
 				bool ccc = 1.0 == 15;
