@@ -32,7 +32,7 @@ BOOL "true"|"false"
 "int" 							{yylval.tipo = "int"; return TK_TIPO_INT; }
 "float" 						{yylval.tipo = "float"; return TK_TIPO_FLOAT;}
 "char"       					{yylval.tipo = "char"; return TK_TIPO_CHAR;}
-"string"						{yylval.tipo = "char"; return TK_TIPO_STRING; }
+"string"						{yylval.tipo = "string"; return TK_TIPO_STRING; }
 "bool"       					{yylval.tipo = "bool"; return TK_TIPO_BOOL;}
 
 "while" 						{yylval.traducao = yytext; return TK_WHILE; }
