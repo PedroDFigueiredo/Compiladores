@@ -159,6 +159,10 @@ BLOCO		: TK_ABRE INI_ESCOPO COMANDOS FIM_ESCOPO TK_FECHA
             {
                 $$.traducao = "";
             }
+            | INI_ESCOPO COMANDOS FIM_ESCOPO
+            {
+                $$.traducao = $2.traducao;
+            }
             ;
 
 COMANDOS	: COMANDO COMANDOS
@@ -237,6 +241,7 @@ ARITs       : ARITMETICO2
             | '(' ARITMETICO ')'  {
             
                 $$.traducao = $2.traducao; $$.label = $2.label;}
+
             ;
             
 RELACIONAL	: RELs OP_RELACIONAL RELs	
@@ -261,6 +266,7 @@ LOGs 		: LOGICO | RELACIONAL ;
 
             
             
+
 
 //OP_CONCAT         : TK_CONCAT;
 
@@ -333,7 +339,23 @@ ATRIBUICAO  :  TK_ID TK_ATRIBUICAO OPERACAO{
                     $$.traducao = "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+getVar($3.traducao)->nomeTemp+";\n";
                 }
 
+            }
+            |INCREMENTAL
+            ;
+
+INCREMENTAL : TK_ID TK_MENOS TK_MENOS{
+                VarNode *var = getVar($1.traducao); 
+
+                $$.traducao = "\t" + var->nomeTemp + " = " + var->nomeTemp + " " + $2.traducao +" 1;\n";
+                cout<<"TK_MAIS TK_MAIS\n";
+            }
+            | TK_ID TK_MAIS TK_MAIS{
+                VarNode *var = getVar($1.traducao); 
+
+                $$.traducao = "\t" + var->nomeTemp + " = " + var->nomeTemp + " " + $2.traducao +" 1;\n";
+                cout<<"TK_MAIS TK_MAIS\n";
             };
+
 
 TIPO        : TK_TIPO_STRING 
             | TK_TIPO_FLOAT 
@@ -501,25 +523,23 @@ ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO ELSE{
     LOOPs
 **/
 
-LOOP : TK_WHILE '(' RELACIONAL ')' BLOCO{
+LOOP :  TK_WHILE '(' RELACIONAL ')' BLOCO{
 
-            string label = geraLabelEscopo().second;
+            pair<string, string> label = geraLabelEscopo();
 
-            string aux = "";
-
-            aux += "\n"+ EscopoAtual->labelInicio + ":\n";    
-            aux += $3.traducao;
-            aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
-            aux += "\n" + $5.traducao ;
-
-            aux += "\n goto " + EscopoAtual->labelInicio +";\n";
-
-            aux += "\n" + label +":\n";
-            $$.traducao = aux;                
+            $$.traducao = "\n"+ label.first + ":\n";    
+            $$.traducao += $3.traducao;
+            $$.traducao += "\n\tif (!("+ $3.label +")) goto " + label.second +";"; 
+            $$.traducao += "\n" + $5.traducao ;
+            $$.traducao += "\n goto " + label.first +";\n";
+            $$.traducao += "\n" + label.second +":\n";
 
         };
 
 %%
+
+
+
 
 #include "lex.yy.c"
 

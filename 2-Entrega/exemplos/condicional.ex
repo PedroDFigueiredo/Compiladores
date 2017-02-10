@@ -6,9 +6,9 @@ int main(){
 	if( a == 1){
 		c = 1;
 	}
-	elif( b == 2 ){
+	elif( b == 2 )
 		c = 2 ;
-	}
+	
 	elif( a == 3 ){
 		c = 3 ;
 	}

@@ -5,6 +5,7 @@ logico: teste
 
 
 
+BLOCO1
 /*Compilador FOCA*/
 #include <iostream>
 #include<string.h>

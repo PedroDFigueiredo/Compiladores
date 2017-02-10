@@ -5,9 +5,11 @@ logico: teste
 
 
 
+BLOCO1
 
 
 
+BLOCO1
 /*Compilador FOCA*/
 #include <iostream>
 #include<string.h>
@@ -26,7 +28,7 @@ int main(void)
 	var1_0 = 0;
 	var1_1 = var1_0;
 
-INI_0:
+INI_2:
 	var1_2 = 51;
 	var1_3 = var1_1 < var1_2;
 
@@ -35,7 +37,7 @@ INI_0:
 	var2_5 = var1_1 + var2_4;
 	var1_1 = var2_5;
 
- goto INI_0;
+ goto INI_2;
 
 FIM_2:
 	return 0;
