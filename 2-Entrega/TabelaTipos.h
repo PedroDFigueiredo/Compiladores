@@ -414,6 +414,70 @@ void criaTabelaTipos(){
     TabelaTipos["bool!=float"] = "bool";
     TabelaTipos["bool!=string"] = "ERRO";
     TabelaTipos["bool!=char"] = "ERRO";
+    
+    
+    //Logicos
+    TabelaTipos["intorbool"] = "bool";
+    TabelaTipos["intorint"] = "bool";
+    TabelaTipos["intorfloat"] = "bool";
+    TabelaTipos["intorstring"] = "ERRO";
+    TabelaTipos["intorchar"] = "ERRO"; 
+    
+    TabelaTipos["floatorbool"] = "bool";
+    TabelaTipos["floatorint"] = "bool";
+    TabelaTipos["floatorfloat"] = "bool";
+    TabelaTipos["floatorstring"] = "ERRO";
+    TabelaTipos["floatorchar"] = "ERRO";
+    
+    TabelaTipos["stringorbool"] = "ERRO";
+    TabelaTipos["stringorint"] = "ERRO";
+    TabelaTipos["stringorfloat"] = "ERRO";
+    TabelaTipos["stringorstring"] = "ERRO";
+    TabelaTipos["stringorchar"] = "ERRO";
+    
+    TabelaTipos["charorbool"] = "ERRO";
+    TabelaTipos["charorint"] = "ERRO";
+    TabelaTipos["charorfloat"] = "ERRO";
+    TabelaTipos["charorstring"] = "ERRO";
+    TabelaTipos["charorchar"] = "ERRO";
+    
+    TabelaTipos["boolorbool"] = "bool";
+    TabelaTipos["boolorint"] = "ERRO";
+    TabelaTipos["boolorfloat"] = "ERRO";
+    TabelaTipos["boolorstring"] = "ERRO";
+    TabelaTipos["boolorchar"] = "ERRO";
+    
+    //diferente
+    TabelaTipos["int!=bool"] = "bool";
+    TabelaTipos["int!=int"] = "bool";
+    TabelaTipos["int!=float"] = "bool";
+    TabelaTipos["int!=string"] = "ERRO";
+    TabelaTipos["int!=char"] = "ERRO"; 
+    
+    TabelaTipos["float!=bool"] = "bool";
+    TabelaTipos["float!=int"] = "bool";
+    TabelaTipos["float!=float"] = "bool";
+    TabelaTipos["float!=string"] = "ERRO";
+    TabelaTipos["float!=char"] = "ERRO";
+    
+    TabelaTipos["string!=bool"] = "ERRO";
+    TabelaTipos["string!=int"] = "ERRO";
+    TabelaTipos["string!=float"] = "ERRO";
+    TabelaTipos["string!=string"] = "ERRO";
+    TabelaTipos["string!=char"] = "ERRO";
+    
+    TabelaTipos["char!=bool"] = "ERRO";
+    TabelaTipos["char!=int"] = "ERRO";
+    TabelaTipos["char!=float"] = "ERRO";
+    TabelaTipos["char!=string"] = "ERRO";
+    TabelaTipos["char!=char"] = "ERRO";
+    
+    TabelaTipos["bool!=bool"] = "bool";
+    TabelaTipos["bool!=int"] = "bool";
+    TabelaTipos["bool!=float"] = "bool";
+    TabelaTipos["bool!=string"] = "ERRO";
+    TabelaTipos["bool!=char"] = "ERRO";
+    
 
 
 }

@@ -1,4 +1,4 @@
-logico: teste
+
 
 
 
@@ -18,18 +18,16 @@ int main(void)
 	int var1_2; 
 	int var1_3;  //variavel: c
 	bool var1_4;  //variavel: b
-	int var1_5; 
-	int var1_6; 
-	bool var1_7; 
+	bool var1_5; 
 
 
 	var1_0 = 10;
 	var1_1 = var1_0;
 	var1_2 = 20;
 	var1_3 = var1_2;
-	var1_5 = 10;
-	var1_6 = 11;
-	var1_7 = var1_5 or var1_6;
+	var1_5 = var1_1 or var1_3;
+	var1_4 = var1_5;
+	cout << var1_4 ;
 	return 0;
 }
 

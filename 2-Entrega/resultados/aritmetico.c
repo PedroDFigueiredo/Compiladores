@@ -1,4 +1,3 @@
-logico: teste
 
 
 TK_MAIS TK_MAIS
