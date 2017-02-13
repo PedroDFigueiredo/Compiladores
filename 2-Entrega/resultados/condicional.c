@@ -1,3 +1,34 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*Compilador FOCA*/
+#include <iostream>
+#include<string.h>
+#include<stdio.h>
+using namespace std;
 int main(void)
 {
 	int var1_0; 
@@ -91,9 +122,7 @@ int main(void)
 
 
 
-
-
- FIM_0_1:
+FIM_0_1:
 
 	return 0;
 }

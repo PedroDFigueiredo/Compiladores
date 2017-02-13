@@ -1,10 +1,19 @@
 int main(){
-	int a = 0;
-	
-	while(a < 51){
-		
-		a = a + 1;
-	}
+	int a = 10;
+	int i = 0;
+
+	do{
+		i++;
+
+	}while( i < a );
 
 
+	while( i > 0 )
+		i--;
+
+	for(int x = 0; x<i; x++)
+		i++;
 } 
+
+
+
