@@ -566,7 +566,7 @@ CMD_CIN 	:  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ
 				// 	$$.traducao = "\tcin >> " + $$.label + " ;\n";
 				// }
  			}
-			| TK_READ '('TK_ID')'
+			| TK_READ '('OPERACAO')'
 			{
 				// if($3.tipoReal == "string"){
  			// 		resetaString($3.label, 1024);

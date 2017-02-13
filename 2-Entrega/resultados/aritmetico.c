@@ -7,15 +7,12 @@ TK_MAIS TK_MAIS
 
 TK_MAIS TK_MAIS
 
-BLOCO1
 
 
 
 TK_MAIS TK_MAIS
 
 
-BLOCO3
-BLOCO1
 /*Compilador FOCA*/
 #include <iostream>
 #include<string.h>
