@@ -25,7 +25,7 @@ BOOL "true"|"false"
 
 "switch" 						{return TK_SWITCH; }
 "case" 							{return TK_CASE; }
-"defaut"						{return TK_DEFAUT; }
+"default"						{return TK_DEFAULT; }
 
 "main"							{return TK_MAIN;}
 
@@ -84,7 +84,7 @@ BOOL "true"|"false"
 {DELIM} 	{}
 
 
-[(){}[\];,]	{return *yytext; }
+[(){}[\];,:]	{return *yytext; }
 [+\-*/]		{return *yytext; }
 
 {INT}		{yylval.traducao = yytext; yylval.tipo = "int"; return TK_INT; }

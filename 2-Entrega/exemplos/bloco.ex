@@ -7,7 +7,8 @@ int main(){
 		{
 			int c;
 			{
-				c=1;
+				int b;
+				int c;
 			}
 			{
 				bool ccc = 1.0 == 15;
@@ -29,12 +30,13 @@ int main(){
 
 
 	{
-
 		int f ;
 		{
+			int b;
 			int g;
 		}
-	
+		
+		int g = f ;
 	}
 	
 }

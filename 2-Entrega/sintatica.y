@@ -72,6 +72,7 @@ int varCount=0;
 int nivel_escopo = 0;
 int profu_escopo = 1;
 int labelCount = 0;
+string switch_var;
 
 void iniEscopo();
 void fimEscopo();
@@ -83,6 +84,7 @@ void addNewVarToTable(string nomeTemp, string tipo);
 //string verificaTipo(string tipoA, string operador, string tipoB);
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c);
+pair<string, string> verificaTipoRelacional(string a, string operador, string b);
 string verificaTipoAtribuicao(string label1, string operador, string label2);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
 string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c);
@@ -123,7 +125,7 @@ void yyerror(string);
 %token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STRING
 //Condicionais e loops
 %token TK_WHILE TK_FOR TK_SWITCH TK_CASE TK_IF TK_ELSE TK_ELIF
-%token TK_BREAK TK_CONTINUE TK_DO TK_DEFAUT
+%token TK_BREAK TK_CONTINUE TK_DO TK_DEFAULT
 //Bloco
 %token TK_ABRE TK_FECHA
 //func + do
@@ -287,16 +289,55 @@ OP_ARITMETICO2  : TK_DIVISAO
 **/
 DECLARA     : TIPO TK_ID // int a
             {
-
+                cout<<"DECLARA"<<$2.traducao<<"\n";
                 addNewVarToTable($2.traducao, $2.tipo);
 
                 VarNode *var = getVar($2.traducao);
 
                 $$.traducao = "";
+                cout<<"DECLARA"<<$2.traducao<<"\n";
                 
             }
-            | DECLARA_E_ATRIBUI
             ;
+
+
+/**
+    ATRIBUIÇÕES
+**/     
+
+ATRIBUICAO  : TK_ID TK_ATRIBUICAO OPERACAO{
+            //Para pegar a variável do tk_id TK_ID
+            //std::cout << "$1 " << getVar($1.traducao)->nomeTemp << "  $Operacao " << $3.label << std::endl; //verfica se mome da variavel já foi declarado e retorna nome temporário
+            
+            string aux = "";
+                //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
+                if($3.label != ""){
+                    aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label);
+                    
+                    $$.traducao = $3.traducao + aux;
+                }
+                else{
+                    aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.traducao);
+                    
+                    $$.traducao = $3.traducao + aux;
+                    $$.traducao = "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+getVar($3.traducao)->nomeTemp+";\n";
+                }
+
+            }
+            |DECLARA_E_ATRIBUI
+            |INCREMENTAL
+            ;
+
+INCREMENTAL : TK_ID TK_MENOS TK_MENOS{
+                VarNode *var = getVar($1.traducao); 
+
+                $$.traducao = "\t" + var->nomeTemp + " = " + var->nomeTemp + " " + $2.traducao +" 1;\n";
+            }
+            | TK_ID TK_MAIS TK_MAIS{
+                VarNode *var = getVar($1.traducao); 
+
+                $$.traducao = "\t" + var->nomeTemp + " = " + var->nomeTemp + " " + $2.traducao +" 1;\n";
+            };
 
 /**
     DECLARAÇÃO com ATRIBUIÇÃO
@@ -316,45 +357,6 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
                 $$.traducao = $4.traducao  + aux;
             }
             ;
-
-/**
-    ATRIBUIÇÕES
-**/     
-
-ATRIBUICAO  :  TK_ID TK_ATRIBUICAO OPERACAO{
-            //Para pegar a variável do tk_id TK_ID
-            //std::cout << "$1 " << getVar($1.traducao)->nomeTemp << "  $Operacao " << $3.label << std::endl; //verfica se mome da variavel já foi declarado e retorna nome temporário
-            
-            string aux = "";
-                //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
-                if($3.label != ""){
-                    aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label);
-                    
-                    $$.traducao = $3.traducao + aux;
-                }
-                else{
-                    aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.traducao);
-                    
-                    $$.traducao = $3.traducao + aux;
-                    $$.traducao = "\t"+getVar($1.traducao)->nomeTemp +" "+$2.traducao+" "+getVar($3.traducao)->nomeTemp+";\n";
-                }
-
-            }
-            |INCREMENTAL
-            ;
-
-INCREMENTAL : TK_ID TK_MENOS TK_MENOS{
-                VarNode *var = getVar($1.traducao); 
-
-                $$.traducao = "\t" + var->nomeTemp + " = " + var->nomeTemp + " " + $2.traducao +" 1;\n";
-                cout<<"TK_MAIS TK_MAIS\n";
-            }
-            | TK_ID TK_MAIS TK_MAIS{
-                VarNode *var = getVar($1.traducao); 
-
-                $$.traducao = "\t" + var->nomeTemp + " = " + var->nomeTemp + " " + $2.traducao +" 1;\n";
-                cout<<"TK_MAIS TK_MAIS\n";
-            };
 
 
 TIPO        : TK_TIPO_STRING 
@@ -383,7 +385,6 @@ NUMEROS     :  TK_INT
             }
             | TK_ID
             {
-                
                 $$.label = getVar($1.traducao)->nomeTemp; //verfica se mome da variavel já foi declarado e retorna nome temporário
                 $$.tipo = getVar($1.traducao)->tipo; //verfica se mome da variavel já foi declarado e retorna tipo
                 $$.traducao = "";
@@ -464,54 +465,105 @@ OPs         : OPs ',' OPERACAO
             
             } 
             | CONDICIONAL_ELSE;
+            | SWITCHCASE
+            ;
+
+
+SWITCHCASE  : SWITCH TK_ABRE INI_ESCOPO CASES FIM_ESCOPO TK_FECHA
+            {
+                $$.traducao = $1.traducao + $4.label;
+                $$.traducao += "\ngoto FIM_SWITCH;\n\n";
+                $$.traducao += $4.traducao;
+                $$.traducao += "\nFIM_SWITCH:\n";
+
+            }
+            | SWITCH TK_ABRE INI_ESCOPO CASES DEFAULT FIM_ESCOPO TK_FECHA
+            {
+                $$.traducao = $1.traducao + $4.label + $5.label;
+                $$.traducao += "\ngoto FIM_SWITCH;\n\n";
+                $$.traducao += $4.traducao + $5.traducao;
+                $$.traducao += "\nFIM_SWITCH:\n";
+
+               
+            };
+
+SWITCH      : TK_SWITCH '(' OPERACAO ')'  
+            {
+                switch_var = $3.label;
+                $$.traducao = $3.traducao;
+
+            };
+
+CASES       : CASE CASES 
+            {
+                $$.label = $1.label + $2.label;
+                $$.traducao = $1.traducao + $2.traducao;
+            }
+            | CASE 
+            ;
+
+CASE        : TK_CASE OPERACAO ':' COMANDOS
+            {
+                pair<string, string> label = geraLabelEscopo();
+                pair<string, string> rtn = verificaTipoRelacional(switch_var, "==", $2.label);
+
+                $$.label = "\n//ini_case\n";
+                $$.label += $2.traducao;
+                $$.label += rtn.second;
+                $$.label += "\n\tif ("+ rtn.first +") goto " + label.second +";\n"; 
+                $$.traducao = label.second+ ":\n";
+                $$.traducao += $4.traducao ;
+                $$.traducao += "//fim_case\n\n";
+
+            };
+DEFAULT     : TK_DEFAULT ':' COMANDOS
+            {
+                pair<string, string> label = geraLabelEscopo();
+
+                $$.label = "\n//ini_defalut";
+                $$.label += "\n\tgoto " + label.second +";\n"; 
+                $$.traducao = label.second+ ":\n";
+                $$.traducao += $3.traducao ;
+                $$.traducao += "//fim_default\n\n";
+
+            };
+
+
 
 CONDICIONAL_ELSE : TK_IF '(' RELACIONAL ')' BLOCO ELSE{
                 //cout<<"CONDICIONAL : TK_IF\n";
                 string label = geraLabelEscopo().second;
-                string aux = $3.traducao;
-                aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
-                aux += "\n" + $5.traducao ;
-                aux += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+                $$.traducao = $3.traducao;
+                $$.traducao += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+                $$.traducao += "\n" + $5.traducao ;
+                $$.traducao += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+                $$.traducao += "\n\t" + label+":";
+                $$.traducao += "\n" + $6.traducao;
+                $$.traducao += EscopoAtual->labelFim + "_" + to_string(nivel_escopo) +":\n\n";
 
-                aux += "\n\t" + label+":";
-                aux += "\n" + $6.traducao+"\n";
-
-                aux += "\n " + EscopoAtual->labelFim + "_" + to_string(nivel_escopo) +":\n\n";
-
-                $$.traducao = aux;
             
             }; 
 ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO ELSE{
 
-                
                 string label = geraLabelEscopo().second;
-                string aux = $3.traducao;
-                aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
-                aux += "\n" + $5.traducao ;
-                aux += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
-
-                aux += "\n\t" + label+":";
-
-               // aux += "\n " + label+ "_" + to_string(nivel_escopo) +":\n\n";
-                 aux += "\n" + $6.traducao+"\n";
-
-                $$.traducao = aux;
+                
+                $$.traducao = $3.traducao;
+                $$.traducao += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+                $$.traducao += "\n" + $5.traducao ;
+                $$.traducao += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+                $$.traducao += "\n\t" + label+":";
+                $$.traducao += "\n" + $6.traducao+"\n";
 
             }
             |TK_ELIF '(' RELACIONAL ')' BLOCO {
                 
                 string label = geraLabelEscopo().second;
-                string aux = $3.traducao;
-                aux += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
-                aux += "\n" + $5.traducao ;
-                aux += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
 
-                aux += "\n\t" + label+":";
-
-               // aux += "\n " + label+ "_" + to_string(nivel_escopo) +":\n\n";
-                 //aux += "\n" + $6.traducao+"\n";
-
-                $$.traducao = aux;                
+                $$.traducao = $3.traducao;
+                $$.traducao += "\n\tif (!("+ $3.label +")) goto " + label +";"; 
+                $$.traducao += "\n" + $5.traducao ;
+                $$.traducao += "\n goto " + EscopoAtual->labelFim+ "_" + to_string(nivel_escopo) +";\n\n"; 
+                $$.traducao += "\n\t" + label+":";
             }
             | TK_ELSE BLOCO{
 
@@ -534,50 +586,75 @@ LOOP :  TK_WHILE '(' RELACIONAL ')' BLOCO{
             $$.traducao += "\n goto " + label.first +";\n";
             $$.traducao += "\n" + label.second +":\n";
 
-        };
+        }
+        | TK_FOR '(' ATRIBUICAO ';' RELACIONAL ';' ATRIBUICAO')' BLOCO{
+            
+            pair<string, string> label = geraLabelEscopo();
 
+            $$.traducao = $3.traducao;
+            $$.traducao += "\n"+ label.first + ":\n"; 
+            $$.traducao += $5.traducao ;
+            $$.traducao += "\n\tif (!("+ $5.label +")) goto " + label.second +";"; 
+            $$.traducao += "\n" + $9.traducao + $7.traducao;
+            $$.traducao += "\n goto " + label.first +";\n\n" + label.second +":\n";
+        }
+        | TK_DO BLOCO TK_WHILE '(' RELACIONAL ')' ';' {
+
+            pair<string, string> label = geraLabelEscopo();
+
+            $$.traducao = "\n"+ label.first + ":\n"; 
+            $$.traducao += $2.traducao;
+
+            $$.traducao += $5.traducao ;
+            $$.traducao += "\n\tif ("+ $5.label +") goto " + label.first +";\n"; 
+
+            //$$.traducao += "\n goto " + label.first +";\n\n" + label.second +":\n";
+        }
+        ;
 
         
-CMD_CIN 	:  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ 
-			{
+CMD_CIN     :  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ 
+            {
 
-				// if($2.tipoReal == "string"){
-				// 	nova_var_string($3.label, 0);
- 			// 		resetaString($3.label, 1024);
- 			// 		variavel var = use_var($3.label, $3.tipo);
-				// 	$$.traducao = "\t cin >> " + var.temp_name + " ;\n";
-				// }
-				// else
-				// {
-	 		// 		$$.label = nova_var($3.label, $2.tipo);
-				// 	$$.traducao = "\t cin >> " + $$.label + " ;\n";
-				// }
-			}
-			| TK_GLOBAL TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ// global var int a;
-			{
-				// if($3.tipoReal == "string"){
-				// 	nova_var_string($4.label, 0);
- 			// 		resetaString($4.label, 1024);
- 			// 		variavel var = use_var($4.label, $4.tipo);
-				// 	$$.traducao = "\tcin >> " + var.temp_name + " ;\n";	
-				// }else
-				// {
-	 		// 		$$.label = nova_var($4.label, $3.tipo);
-				// 	$$.traducao = "\tcin >> " + $$.label + " ;\n";
-				// }
- 			}
-			| TK_READ '('OPERACAO')'
-			{
-				// if($3.tipoReal == "string"){
- 			// 		resetaString($3.label, 1024);
- 			// 		variavel var = use_var($3.label, $3.tipo);
-				// 	$$.traducao = "\t cin << " + var.temp_name + " ;\n";	
-				// }
-				// else{
-				// 	$$.traducao = "\t cin << " + $3.label + " ;\n";	
-				// }
-			}
-			;
+
+                // if($2.tipoReal == "string"){
+                //  nova_var_string($3.label, 0);
+            //      resetaString($3.label, 1024);
+            //      variavel var = use_var($3.label, $3.tipo);
+                //  $$.traducao = "\t cin >> " + var.temp_name + " ;\n";
+                // }
+                // else
+                // {
+            //      $$.label = nova_var($3.label, $2.tipo);
+                //  $$.traducao = "\t cin >> " + $$.label + " ;\n";
+                // }
+            }
+            | TK_GLOBAL TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ// global var int a;
+            {
+                // if($3.tipoReal == "string"){
+                //  nova_var_string($4.label, 0);
+            //      resetaString($4.label, 1024);
+            //      variavel var = use_var($4.label, $4.tipo);
+                //  $$.traducao = "\tcin >> " + var.temp_name + " ;\n"; 
+                // }else
+                // {
+            //      $$.label = nova_var($4.label, $3.tipo);
+                //  $$.traducao = "\tcin >> " + $$.label + " ;\n";
+                // }
+            }
+            | TK_READ '('TK_ID')'
+            {
+                // if($3.tipoReal == "string"){
+            //      resetaString($3.label, 1024);
+            //      variavel var = use_var($3.label, $3.tipo);
+                //  $$.traducao = "\t cin << " + var.temp_name + " ;\n";    
+                // }
+                // else{
+                //  $$.traducao = "\t cin << " + $3.label + " ;\n"; 
+                // }
+            }
+            ;
+
 
 CMD_COUT 	: TK_WRITE '(' OPERACAO ')'
 			{	
@@ -597,22 +674,8 @@ int main( int argc, char* argv[] )
    
 	 char var0_0[6]; 
 
-
 	strcpy (var0_0,"teste");
-    //string var0_0[6]; 
 
-
-	//strcpy (var0_0,"teste");
-	
-
-
-	// = "teste";
-
-
-    //x = (10 || 20);
-    
-    //x = (0 or 1);
-    //std::cout << "logico: " << var0_0 << std::endl;
     yyparse();
     //for (map<string,VarNode*>::iterator it=tkIdTable.begin(); it!=tkIdTable.end(); ++it)
 
@@ -712,12 +775,18 @@ pair<bool, VarNode*> getVarByTkid(string tkid){
     return rtn;
 }
 void addNewVarToTable(string nomeTemp, string tipo){
-    //verifica se a nova variavel está na tabela
-    pair<bool, VarNode*> p = getVarByTkid(nomeTemp);
-    if(p.first){
-        yyerror("error: redeclaração da variavel '"+tipo+" "+nomeTemp+ "'\n");
-    }else{
+ 
+    if(EscopoAtual->tkIdTable.find(nomeTemp)==EscopoAtual->tkIdTable.end()){
+        //verifica se variavel existe noescopo atual
         EscopoAtual->tkIdTable[nomeTemp] = EscopoAtual->varTable[geraVar(tipo, nomeTemp)];
+    }else{
+        //verifica se a nova variavel está na tabela
+        pair<bool, VarNode*> p = getVarByTkid(nomeTemp);
+        if(p.first){
+            yyerror("error: redeclaração da variavel '"+tipo+" "+nomeTemp+ "'\n");
+        }else{
+            EscopoAtual->tkIdTable[nomeTemp] = EscopoAtual->varTable[geraVar(tipo, nomeTemp)];
+        }
     }
 }
 //busca variavel por tkid
@@ -790,6 +859,18 @@ string verificaTipoRelacional(atributos *a, atributos *b,string operador, atribu
     
     return rtn ;
 }
+pair<string, string> verificaTipoRelacional(string a, string operador, string b){
+    string tipo = buscaTipoTabela(getLabel(a)->tipo, operador, getLabel(b)->tipo);
+
+    string var = geraVar(tipo);
+ 
+    pair<string, string> rtn;
+    rtn.second = "\t" +  var +" = "+a+" "+operador + " "+b+";\n";
+    rtn.first = var;
+    return rtn ;
+
+}
+
 
 string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c){
     string tipo = "bool"; //buscaTipoTabela(b->tipo, operador, c->tipo); 
