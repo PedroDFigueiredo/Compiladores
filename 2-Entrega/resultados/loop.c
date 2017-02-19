@@ -1,18 +1,93 @@
+//iniEscopo:1 1
+
+
+//DECLARA_E_ATRIBUI::1 1 FIM_1 i
+
+
+
+//iniEscopo:2 2
+
+
+//iniEscopo:3 3
+
+//iniEscopo:4 4
+//TK_CONTINUE::4 4 FIM_4
+//BLOCO:: 4 4
+//IF::4 4 FIM_4
+//fimEscopo:4 4
+
+//CONDICIONAL IF::3 3 FIM_3
+//fimEscopo:3 3
+
+
+//BLOCO
+//fimEscopo:2 2
+
+
+//iniEscopo:2 5
+//DECLARA_E_ATRIBUI::2 5 FIM_5 i
+
+//iniEscopo:3 6
+
+//iniEscopo:4 7
+//TK_CONTINUE::4 7 FIM_7
+//BLOCO:: 7 4
+//IF::4 7 FIM_7
+//fimEscopo:4 7
+
+
+//CONDICIONAL IF::3 6 FIM_6
+//fimEscopo:3 6
+
+
+//BLOCO_SE
+//TK_FOR::2 5 FIM_5_2
+//fimEscopo:2 5
+
+
+//iniEscopo:2 8
+//DECLARA_E_ATRIBUI::2 8 FIM_8 j
+
+//iniEscopo:3 9
+//DECLARA_E_ATRIBUI::3 9 FIM_9 k
+
+//iniEscopo:4 10
+//iniEscopo:5 11
+//TK_CONTINUE::5 11 FIM_11
+//BLOCO:: 11 5
+//IF::5 11 FIM_11
+//fimEscopo:5 11
+
+//CONDICIONAL IF::4 10 FIM_10
+//fimEscopo:4 10
+
+
+//BLOCO_SE
+//TK_FOR::3 9 FIM_9_3
+//fimEscopo:3 9
+//BLOCO_SE:: 8 2
+//TK_FOR::2 8 FIM_8_2
+//fimEscopo:2 8
+
+
+
+
+//iniEscopo:2 12
+
+
+
+
+
+//BLOCO
+//TK_WHILE::2 12 FIM_12_2
+//fimEscopo:2 12
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
+//BLOCO
 /*Compilador FOCA*/
 #include <iostream>
 #include<string.h>
@@ -21,51 +96,145 @@ using namespace std;
 int main(void)
 {
 	int var1_0; 
-	int var1_1;  //variavel: a
-	int var1_2; 
-	int var1_3;  //variavel: i
-	bool var1_4; 
-	int var1_5; 
-	bool var1_6; 
-	int var2_7; 
-	int var2_8;  //variavel: x
+	int var1_1;  //variavel: i
+	int var1_22; 
+	bool var1_23; 
+	int var2_4; 
+	bool var2_5; 
+	int var3_2; 
+	bool var3_3; 
+	int var2_6; 
+	int var2_7;  //variavel: i
+	int var2_8; 
 	bool var2_9; 
+	int var3_10; 
+	bool var3_11; 
+	int var2_12; 
+	int var2_13;  //variavel: j
+	int var2_14; 
+	bool var2_15; 
+	int var3_16; 
+	int var3_17;  //variavel: k
+	int var3_18; 
+	bool var3_19; 
+	int var4_20; 
+	bool var4_21; 
 
 
-	var1_0 = 10;
+	var1_0 = 0;
 	var1_1 = var1_0;
-	var1_2 = 0;
-	var1_3 = var1_2;
 
+//ini_do_while
 INI_2:
-	var1_3 = var1_3 + 1;
-	var1_4 = var1_3 < var1_1;
+	var1_1 = var1_1 + 1;
 
-	if (var1_4) goto INI_2;
+//ini_if
+	var3_2 = 5;
+	var3_3 = var1_1 == var3_2;
 
-INI_6:
-	var1_5 = 0;
-	var1_6 = var1_3 > var1_5;
+	if (!(var3_3)) goto FIM_4;
+	goto FIM_2;//break
 
-	if (!(var1_6)) goto FIM_6;
-	var1_3 = var1_3 - 1;
-	var2_7 = 0;
-	var2_8 = var2_7;
+FIM_4:
+//fim_if
 
-INI_5:
-	var2_9 = var2_8 < var1_3;
+	cout << var1_1 <<"\n";
+	var2_4 = 10;
+	var2_5 = var1_1 < var2_4;
+
+	if (var2_5) goto INI_2;
+FIM_2: //fim_do_while
+
+//ini_for
+	var2_6 = 0;
+	var2_7 = var2_6;
+
+INI_5_l:
+	var2_8 = 10;
+	var2_9 = var2_7 < var2_8;
 
 	if (!(var2_9)) goto FIM_5;
-	var1_3 = var1_3 + 1;
-	var2_8 = var2_8 + 1;
 
- goto INI_5;
+//ini_if
+	var3_10 = 5;
+	var3_11 = var2_7 != var3_10;
 
+	if (!(var3_11)) goto FIM_7;
+	goto INI_5;//continue
+
+FIM_7:
+//fim_if
+
+	cout << var2_7 <<"\n";
+
+INI_5:
+	var2_7 = var2_7 + 1;
+
+	goto INI_5_l;
 FIM_5:
+//fim_for
 
- goto INI_6;
+//ini_for
+	var2_12 = 0;
+	var2_13 = var2_12;
 
-FIM_6:
+INI_8_l:
+	var2_14 = 2;
+	var2_15 = var2_13 < var2_14;
+
+	if (!(var2_15)) goto FIM_8;
+//ini_for
+	var3_16 = 0;
+	var3_17 = var3_16;
+
+INI_9_l:
+	var3_18 = 5;
+	var3_19 = var3_17 < var3_18;
+
+	if (!(var3_19)) goto FIM_9;
+
+//ini_if
+	var4_20 = 3;
+	var4_21 = var3_17 == var4_20;
+
+	if (!(var4_21)) goto FIM_11;
+	goto INI_9;//continue
+
+FIM_11:
+//fim_if
+
+	cout << var2_13 <<"\n";
+	cout << var3_17 <<"\n";
+
+INI_9:
+	var3_17 = var3_17 + 1;
+
+	goto INI_9_l;
+FIM_9:
+//fim_for
+
+
+INI_8:
+	var2_13 = var2_13 + 1;
+
+	goto INI_8_l;
+FIM_8:
+//fim_for
+
+//ini_while
+INI_12:
+	var1_22 = 10;
+	var1_23 = var1_1 < var1_22;
+
+	if (!(var1_23)) goto FIM_12;
+	var1_1 = var1_1 + 1;
+	cout << var1_1 <<"\n";
+
+	goto INI_12;
+
+FIM_12:
+//fim_while
+
 	return 0;
 }
 

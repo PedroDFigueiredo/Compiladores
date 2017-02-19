@@ -2,20 +2,30 @@ int main(){
 	int a=0;
 	int b=1;
 
-	switch(b) {
-	   	case  1 :{
-            a = a+1;
-        }
+
+  
+
+
+    switch(b) {
+        case  1 :
+            a++;
+        
         case  2 :{
-            a = a+1;
+            a++;
         }
+
         case  3 :{
-            a = a+1;
+            a++;
+            break;
+
         }
         default :
-        	a = 15;
-	}
-  
+            a = 10;
+    }
+
+    write(a);
+
+
 }
 
 
