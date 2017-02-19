@@ -167,7 +167,6 @@ S           : TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 
 BLOCO		: TK_ABRE INI_ESCOPO COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
-            	cout<<"//BLOCO\n";
                 $$.traducao = $3.traducao;
 
             }
@@ -177,14 +176,12 @@ BLOCO		: TK_ABRE INI_ESCOPO COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             }
             | INI_ESCOPO COMANDO
             {
-    	cout<<"//BLOCO::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
 
                 $$.traducao = $2.traducao;
             }
             ;
 BLOCO_IF     : TK_ABRE INI_ESCOPO_IF COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
-                cout<<"//BLOCO\n";
                 $$.traducao = $3.traducao;
 
             }
@@ -194,7 +191,6 @@ BLOCO_IF     : TK_ABRE INI_ESCOPO_IF COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             }
             | INI_ESCOPO_IF COMANDO
             {
-                cout<<"//BLOCO::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
 
                 $$.traducao = $2.traducao;
             }
@@ -202,7 +198,6 @@ BLOCO_IF     : TK_ABRE INI_ESCOPO_IF COMANDOS /*FIM_ESCOPO*/ TK_FECHA
 
 BLOCO_SE       : TK_ABRE COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
-                cout<<"//BLOCO_SE\n";
                 $$.traducao = $2.traducao;
 
             }
@@ -212,7 +207,6 @@ BLOCO_SE       : TK_ABRE COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             }
             | COMANDO
             {
-        cout<<"//BLOCO_SE::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
 
                 $$.traducao = $1.traducao;
             }
@@ -342,7 +336,6 @@ OP_ARITMETICO2  : TK_DIVISAO
 **/
 DECLARA     : TIPO TK_ID // int a
             {
-                cout<<"DECLARA"<<$2.traducao<<"\n";
                 addNewVarToTable($2.traducao, $2.tipo);
 
                 VarNode *var = getVar($2.traducao);
@@ -397,14 +390,12 @@ INCREMENTAL : TK_ID TK_MENOS TK_MENOS{
 DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
             {
                 string aux = "";
-                cout<<"//DECLARA_E_ATRIBUI::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim;
 
                 for (int i = 0; (i < $2.colLabels.size()) && (i < $4.colLabels.size()); i++){
 
                     addNewVarToTable($2.colLabels[i], $2.tipo);
                     //não será necessário essa parte assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa no escopo  qual pertence
                     //aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
-cout<<" "<<$2.colLabels[i]<<"\n";
                     aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
                 }
 
@@ -509,7 +500,6 @@ OPs         : OPs ',' OPERACAO
 **/
 
 CONDICIONAL : INI_ESCOPO_IF IF ELSEs{
-                cout<<"//CONDICIONAL ELSEs::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 $$.traducao = $2.traducao;
                 $$.traducao += "\tgoto " + EscopoAtual->labelFim+";\n"; 
                 $$.traducao += $2.label +":\n";
@@ -518,14 +508,12 @@ CONDICIONAL : INI_ESCOPO_IF IF ELSEs{
 
             } 
             | INI_ESCOPO_IF IF {
-                cout<<"//CONDICIONAL IF::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 $$.traducao = $2.traducao + $2.label + ":\n//fim_if\n\n";
                 fimEscopo();
 
             } 
             ;
 IF          : TK_IF '(' RELACIONAL ')' BLOCO_IF {
-                cout<<"//IF::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 $$.label  = EscopoAtual->labelFim;
 
                 $$.traducao = "\n//ini_if\n" + $3.traducao;
@@ -542,14 +530,12 @@ ELSEs       : ELSE ELSEs
             {
                 $$.label = $1.label + $2.label;
                 $$.traducao = $1.traducao + $2.traducao;
-                cout<<"//ELSEs::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<" -->"<<"\n";
 
             }
             | ELSE 
             ;
 
 ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO_IF {
-                cout<<"//TK_ELIF ELSE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 
                 $$.traducao = "\n//ini_elif\n" +$3.traducao;
@@ -561,7 +547,6 @@ ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO_IF {
 
             }
             | TK_ELSE BLOCO{
-                cout<<"//TK_ELSE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 $$.traducao = "\n//ini_else\n" +$2.traducao ;
                 fimEscopo();
@@ -569,7 +554,6 @@ ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO_IF {
 
 SWITCHCASE  : SWITCH TK_ABRE INI_ESCOPO CASEs /*FIM_ESCOPO*/ TK_FECHA
             {
-                cout<<"//SWITCHCASE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(profu_escopo)<<" switch_var"<<switch_var<<"\n";
 
                 $$.traducao = $1.traducao + $4.label;
                 $$.traducao += "\ngoto "+EscopoAtual->labelFim +";\n\n";
@@ -581,7 +565,6 @@ SWITCHCASE  : SWITCH TK_ABRE INI_ESCOPO CASEs /*FIM_ESCOPO*/ TK_FECHA
             }
             | SWITCH TK_ABRE INI_ESCOPO CASEs DEFAULT TK_FECHA
             {
-                cout<<"//SWITCHCASEDEFA::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(profu_escopo)<<" switch_var"<<switch_var<<"\n";
 
                 $$.traducao = $1.traducao + $4.label + $5.label;
                 $$.traducao += "\ngoto "+EscopoAtual->labelFim +";\n\n";
@@ -595,7 +578,6 @@ SWITCH      : TK_SWITCH '(' OPERACAO ')'
             {
                 switch_var = $3.label;
                 $$.traducao = $3.traducao;
-                cout<<"//SWITCH::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(nivel_escopo)<<" switch_var"<<switch_var<<"\n";
 
 
             };
@@ -605,7 +587,6 @@ CASEs       : CASE CASEs
 
                 $$.label = $1.label + $2.label;
                 $$.traducao = $1.traducao + $2.traducao;
-                cout<<"//CASEs::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<" -->"<<"\n";
 
             }
             | CASE 
@@ -622,7 +603,6 @@ CASE        : TK_CASE OPERACAO ':' BLOCO
                 $$.traducao += $4.traducao ;
                 $$.traducao += "//fim_case\n\n";
                // $$.traducao += EscopoAtual->labelFim+":\n\n";
-                cout<<"//CASE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 fimEscopo();
 
 
@@ -636,7 +616,6 @@ DEFAULT     : TK_DEFAULT ':' BLOCO
                 $$.traducao = EscopoAtual->labelInicio + ":\n";
                 $$.traducao += $3.traducao ;
                 $$.traducao += "//fim_default\n\n";
-                cout<<"//DEFAULT::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 fimEscopo();
 
@@ -644,7 +623,6 @@ DEFAULT     : TK_DEFAULT ':' BLOCO
             };
 
 BREAK       : TK_BREAK  {
-                cout<<"//TK_CONTINUE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 Escopo *e = EscopoAtual->escopoPai;
                 while(e->escopoPai != 0 && e->isCondicional){
@@ -655,7 +633,6 @@ BREAK       : TK_BREAK  {
             };
 
 CONTINUE    : TK_CONTINUE  {
-                cout<<"//TK_CONTINUE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 Escopo *e = EscopoAtual;
                 while(e->escopoPai != 0 && e->isCondicional){
@@ -670,7 +647,6 @@ CONTINUE    : TK_CONTINUE  {
 **/
 
 LOOP :   TK_WHILE '(' RELACIONAL ')' BLOCO{
-            cout<<"//TK_WHILE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(nivel_escopo)<<"\n";
 
             pair<string, string> label = geraLabelEscopo();
 
@@ -684,7 +660,6 @@ LOOP :   TK_WHILE '(' RELACIONAL ')' BLOCO{
 
         }
         | INI_ESCOPO TK_FOR '(' ATRIBUICAO ';' RELACIONAL ';' ATRIBUICAO')' BLOCO_SE{
-            cout<<"//TK_FOR::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(nivel_escopo)<<"\n";
             
             $$.traducao = "//ini_for\n"+$4.traducao;
             $$.traducao += "\n"+ EscopoAtual->labelInicio + "_l:\n"; 
@@ -1054,7 +1029,6 @@ void iniEscopoIf(){
 void iniEscopo(){
         
     nivel_escopo++;
-	cout<<"//iniEscopo:"<<to_string(nivel_escopo)<<" "<<to_string(profu_escopo)<<"\n";
 
     Escopo *e = new Escopo(nivel_escopo);
 
@@ -1073,7 +1047,6 @@ void iniEscopo(){
 
 }
 void fimEscopo(){
-	cout<<"//fimEscopo:"<<to_string(nivel_escopo)<<" "<<to_string(EscopoAtual->profundidade)<<"\n";
     nivel_escopo--;
     EscopoAtual = EscopoAtual->escopoPai;
 }
