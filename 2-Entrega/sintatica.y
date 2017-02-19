@@ -613,8 +613,8 @@ LOOP :  TK_WHILE '(' RELACIONAL ')' BLOCO{
         ;
 
         
-CMD_CIN     :  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ 
-            {
+CMD_CIN     :  //TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ 
+            //{
 
 
                 // if($2.tipoReal == "string"){
@@ -628,9 +628,9 @@ CMD_CIN     :  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ
             //      $$.label = nova_var($3.label, $2.tipo);
                 //  $$.traducao = "\t cin >> " + $$.label + " ;\n";
                 // }
-            }
-            | TK_GLOBAL TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ// global var int a;
-            {
+            //}
+            //| TK_GLOBAL TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ// global var int a;
+            //{
                 // if($3.tipoReal == "string"){
                 //  nova_var_string($4.label, 0);
             //      resetaString($4.label, 1024);
@@ -641,13 +641,13 @@ CMD_CIN     :  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ
             //      $$.label = nova_var($4.label, $3.tipo);
                 //  $$.traducao = "\tcin >> " + $$.label + " ;\n";
                 // }
-            }
+            //}
             | TK_READ '('TK_ID')'
             {
                 // if($3.tipoReal == "string"){
             //      resetaString($3.label, 1024);
             //      variavel var = use_var($3.label, $3.tipo);
-                //  $$.traducao = "\t cin << " + var.temp_name + " ;\n";    
+                  //$$.traducao = "\t cin << " + var.temp_name + " ;\n";    
                 // }
                 // else{
                 //  $$.traducao = "\t cin << " + $3.label + " ;\n"; 
