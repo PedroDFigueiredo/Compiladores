@@ -234,7 +234,7 @@ COMANDO     : OPERACAO ';'
             | NUMEROS ';'
             | DECLARA ';'
             | ATRIBUICAO ';'
-            | BLOCO
+            | BLOCO_
             | CONDICIONAL
             | LOOP
             | CMD_COUT ';'
@@ -251,7 +251,10 @@ COMANDO     : OPERACAO ';'
 */
 
             ;
-
+BLOCO_ : BLOCO {
+                $$.traducao = $1.traducao;
+                fimEscopo();
+            };
 OPERACAO    : ARITMETICO
             | LOGICO
             | RELACIONAL
