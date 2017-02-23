@@ -2,6 +2,7 @@ int main(){
 
 	int b = 4;
 	int c = 0;
+	int a = 15;
 
 	if( a == 0)
 		c = 1;
@@ -12,8 +13,9 @@ int main(){
 	elif( a < 3)
 		c = 3;
 		
-	else
-		c = 4;
+	else{
+		c = 145;
+	}
 	
 write(c);
 
