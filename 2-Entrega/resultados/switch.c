@@ -75,7 +75,7 @@ int main(void)
 
 	var1_0 = 0;
 	var1_1 = var1_0;
-	var1_2 = 25;
+	var1_2 = 2;
 	var1_3 = var1_2;
 
 //ini_case

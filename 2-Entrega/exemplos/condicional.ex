@@ -11,6 +11,7 @@ int main(){
 	
 	elif( a < 3)
 		c = 3;
+		
 	else
 		c = 4;
 	

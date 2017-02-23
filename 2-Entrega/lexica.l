@@ -34,6 +34,7 @@ BOOL "true"|"false"
 "char"       					{yylval.tipo = "char"; return TK_TIPO_CHAR;}
 "string"						{yylval.tipo = "string"; return TK_TIPO_STRING; }
 "bool"       					{yylval.tipo = "bool"; return TK_TIPO_BOOL;}
+"void"       					{yylval.tipo = "void"; return TK_VOID;}
 
 "while" 						{yylval.traducao = yytext; return TK_WHILE; }
 "for" 							{yylval.traducao = yytext; return TK_FOR; }
