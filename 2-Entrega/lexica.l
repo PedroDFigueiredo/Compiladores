@@ -63,6 +63,9 @@ BOOL "true"|"false"
 [>] 							{yylval.traducao = yytext; return TK_MAIOR;}
 "!="							{yylval.traducao = yytext; return TK_DIFERENTE; }
 "=="							{yylval.traducao = yytext; return TK_IGUAL; }
+">="                            {yylval.traducao = yytext; return TK_MAIOR_IGUAL; }
+">="                            {yylval.traducao = yytext; return TK_MENOR_IGUAL; }
+"=<"
 
 "and" 							{yylval.traducao = yytext; return TK_AND;}
 "or" 							{yylval.traducao = yytext; return TK_OR;}
@@ -73,7 +76,7 @@ BOOL "true"|"false"
 [*] 							{yylval.traducao = yytext; return TK_MULT;}
 [/] 							{yylval.traducao = yytext; return TK_DIVISAO;}
 
-"\.\."							{ yylval.traducao = yytext;return TK_CONCAT;}
+"."							    { yylval.traducao = yytext;return TK_CONCAT;}
 
 [{]								{return TK_ABRE; }
 [}]								{return TK_FECHA; }

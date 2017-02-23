@@ -6,10 +6,12 @@ int main(){
 		int bb;
 		{
 			int c;
+			int b;
 			{
 				int b;
 				int c;
 			}
+			
 			{
 				bool ccc = 1.0 == 15;
 
@@ -36,7 +38,7 @@ int main(){
 			int g;
 		}
 		
-		int g = f ;
+		int b;
 	}
 	
 }

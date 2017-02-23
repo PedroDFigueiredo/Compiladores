@@ -26,7 +26,7 @@ int main(void)
 	var1_3 = var1_2;
 	var1_5 = var1_1 or var1_3;
 	var1_4 = var1_5;
-	cout << var1_4 ;
+	cout << var1_4 <<"\n";
 	return 0;
 }
 
