@@ -4,10 +4,10 @@ int main(){
 
 
 	while( a < 10){
+		write(a);
 		a++;
 	}
 
-	while( a > 0)
-		a--;
+	write(a);
 	
 }
