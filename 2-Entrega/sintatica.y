@@ -46,26 +46,8 @@ VarNode::VarNode(string a, string b, string c, int d = 0){
     tamString = d;
     tamVetor = 0;
 };
-class Funcao{
-    public:
-        string nomeTemp;
-        string tkid;
-        string tipo;
-        string traducao;
-        vector<VarNode*> parametros;
-        vector<VarNode*> retornos;
-        Funcao(string a, string b, string c);
-};
-Funcao::Funcao(string a, string b, string c){
-    nomeTemp = a;
-    tipo = b;
-    tkid = c;
-};
-Funcao* getFunc(string nomeTemp);
 VarNode* getVar(string nomeTemp);
-VarNode* getLabel(string nomeTemp);
 typedef map<string, VarNode*> MapVarNode;
-typedef map<string, Funcao*> MapFuncao;
 pair<string,string> geraLabelEscopo();
 
 class Escopo{
@@ -77,8 +59,6 @@ class Escopo{
         string labelFim;
         MapVarNode tkIdTable;
         MapVarNode varTable;
-        MapFuncao funcTable;
-        MapFuncao funcTempTable;
         vector<Escopo*> list_escopo;
         Escopo *escopoPai;
         Escopo(int);
@@ -107,7 +87,6 @@ Escopo *EscopoAtual = EscopoGlobal;
 //Contagem para tabela de variaveis
 //criar por escopo
 int varCount=0;
-int funcCount=0;
 int nivel_escopo = 0;
 int profu_escopo = 1;
 int labelCount = 1;
@@ -121,16 +100,12 @@ void fimEscopo();
 
 void criaTabelaTipos();
 void addNewVarToTable(string nomeTemp, string tipo);
-void addNewFuncToTable(string nomeTemp, string tipo, vector<VarNode*> params);
-void geraFuncao(string name, string tipo, vector<string> col);
-
 
 //string verificaTipo(string tipoA, string operador, string tipoB);
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c);
 string verificaTipoRelacional(atributos *a, atributos *b,string operador, atributos *c);
 pair<string, string> verificaTipoRelacional(string a, string operador, string b);
 string verificaTipoAtribuicao(string label1, string operador, string label2);
-string verificaTipoAtribuicao_func(string label1, string operador, string label2, string labelFunc);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
 string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c);
 string geraVarString(atributos *a, int flagCin);
@@ -140,8 +115,6 @@ string to_string(int i);
 string addNewVar();
 string geraVar(string tipo);
 string geraVar(string tipo, string tkid);
-string geraFunc(string tipo);
-string geraFunc(string tipo, string tkid, vector<VarNode*> params);
 string decl = "";
 
 
@@ -149,13 +122,10 @@ string decl = "";
 //busca variaveis dentro do escopo
 pair<bool, VarNode*> varByTkid(string tkid);
 pair<bool, VarNode*> varByNameTemp(string nomeTemp);
-pair<bool, Funcao*> getFuncByTkid(string tkid);
-pair<bool, Funcao*> getFuncByNameTemp(string tkid);
+
 
 //prints declarações variáveis...
-void printFuncDeclarations();
-void printVarDeclarations();
-void printFuncoes();
+void printDeclarations();
 
 //Matrizes
 int auxVetor = 0;
@@ -186,7 +156,7 @@ void yyerror(string);
 //TIPOS
 %token TK_TIPO_STRING TK_TIPO_FLOAT TK_TIPO_CHAR TK_TIPO_BOOL TK_TIPO_INT
 //VALORES
-%token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STRING TK_VOID
+%token TK_INT TK_FLOAT TK_CHAR TK_BOOL TK_STRING
 //Condicionais e loops
 %token TK_WHILE TK_FOR TK_SWITCH TK_CASE TK_IF TK_ELSE TK_ELIF
 %token TK_BREAK TK_CONTINUE TK_DO TK_DEFAULT
@@ -211,18 +181,14 @@ void yyerror(string);
 S           : TK_TIPO_INT TK_MAIN '(' ')' BLOCO
             {
 
-                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\n\n";
-                printFuncDeclarations();
-                printVarDeclarations();
-                cout << "\nint main(void)\n{\n";
+                cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nusing namespace std;\nint main(void)\n{\n";
+                printDeclarations();
                 cout <<"\n\n"<< $5.traducao << "\treturn 0;\n}" << endl; 
-                printFuncoes();
             }
             ;
 
 BLOCO		: TK_ABRE INI_ESCOPO COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
-            	cout<<"//BLOCO\n";
                 $$.traducao = $3.traducao;
 
             }
@@ -230,10 +196,14 @@ BLOCO		: TK_ABRE INI_ESCOPO COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
                 $$.traducao = "";
             }
-     
+            | INI_ESCOPO COMANDO
+            {
+
+                $$.traducao = $2.traducao;
+            }
+            ;
 BLOCO_IF     : TK_ABRE INI_ESCOPO_IF COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
-                cout<<"//BLOCO\n";
                 $$.traducao = $3.traducao;
 
             }
@@ -243,7 +213,6 @@ BLOCO_IF     : TK_ABRE INI_ESCOPO_IF COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             }
             | INI_ESCOPO_IF COMANDO
             {
-                cout<<"//BLOCO::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
 
                 $$.traducao = $2.traducao;
             }
@@ -251,7 +220,6 @@ BLOCO_IF     : TK_ABRE INI_ESCOPO_IF COMANDOS /*FIM_ESCOPO*/ TK_FECHA
 
 BLOCO_SE       : TK_ABRE COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             {
-                cout<<"//BLOCO_SE\n";
                 $$.traducao = $2.traducao;
 
             }
@@ -261,7 +229,6 @@ BLOCO_SE       : TK_ABRE COMANDOS /*FIM_ESCOPO*/ TK_FECHA
             }
             | COMANDO
             {
-        cout<<"//BLOCO_SE::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
 
                 $$.traducao = $1.traducao;
             }
@@ -289,29 +256,32 @@ COMANDO     : OPERACAO ';'
             | NUMEROS ';'
             | DECLARA ';'
             | ATRIBUICAO ';'
+            | BLOCO_
             | CONDICIONAL
             | LOOP
             | CMD_COUT ';'
 			| CMD_CIN ';'
             | CONTINUE ';'
             | BREAK ';'
-            | FUNCAO
             | SWITCHCASE
 
 
+            ;
+BLOCO_ : BLOCO {
+                $$.traducao = $1.traducao;
+                fimEscopo();
+            };
 OPERACAO    : ARITMETICO
             | LOGICO
             | RELACIONAL
             | CONCATENACAO
-            | EXECUTA_FUNCAO
             ;
             
 ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             { 
-                cout<<"//ARITMETICO::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
-                cout<<"//:"<<$1.label<<":"<<$2.label<<":"<<$3.label<<":"<<"\n";
-             
+
                 $$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
+                
             }
             |ARITMETICO2
             | '('ARITMETICO')' {
@@ -320,26 +290,12 @@ ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             }
             //|NUMEROS 
             //|TK_ID
-            | EXECUTA_FUNCAO{
-
-                Funcao *f = getFunc($1.label);
-                cout<<"//arit:EXECUTA_FUNCAO:"<<$1.label<<":"<<"\n";
-
-                if(f->tipo != "void"){
-                    $$.label = f->retornos[0]->nomeTemp;
-                    $$.tipo = f->tipo;
-                    
-                }else{
-                    yyerror("Operação com função tipo void '"+$1.label+"'");
-                }
-                //$$.colLabels.push_back($$.label);
-                $$.traducao = "\n\t"+ f->nomeTemp + "();\n";
-            }
             ;
+
 
 ARITMETICO2 : ARITs OP_ARITMETICO2 ARITs
             {
-                cout<<"//ARITMETICO2::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
+                
                 $$.traducao = $1.traducao + $3.traducao + verificaTipo(&$$, &$1, $2.traducao, &$3);
                 
             } 
@@ -405,9 +361,6 @@ DECLARA     : TIPO TK_ID // int a
                 VarNode *var = getVar($2.traducao);
 
                 $$.traducao = "";
-                cout<<"//DECLARA_PARAM:"<<$2.traducao<<":"<<"\n";
-                $$.label = var->nomeTemp;
-
                 
             }
             |DECLARA_VETOR
@@ -480,29 +433,17 @@ DIMENCAO 	: '['NUMEROS']'
 **/     
 
 ATRIBUICAO  : TK_ID TK_ATRIBUICAO OPERACAO{
+            //Para pegar a variável do tk_id TK_ID
+            //std::cout << "$1 " << getVar($1.traducao)->nomeTemp << "  $Operacao " << $3.label << std::endl; //verfica se mome da variavel já foi declarado e retorna nome temporário
+            
             string aux = "";
                 //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
-                cout<<"//DECLARA_E_ATRIBUI::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
-
-                cout<<"//ATRIBUICAO:"<<$1.label<<":"<<$2.label<<":"<<$3.label<<":"<<"\n";
-
-                if($3.label != ""){
-                    if($3.colLabels.size() > 0){
-                        cout<<"//ifif\n";
-                        cout<<"//"+$3.colLabels[0]+"\n";
-                        cout<<"//"+$3.colLabels[1]+"\n";
-
-                        $$.traducao = $3.traducao + verificaTipoAtribuicao_func(getVar($1.traducao)->nomeTemp, $2.traducao, $3.colLabels[0], $3.label);
-                    }else{
-                        cout<<"//if else:"<<getVar($1.traducao)->nomeTemp<<":"<<$3.label<<"::\n";
-                        aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label);
-                        
-                        $$.traducao = $3.traducao + aux;
-                    }
-
+                if($3.label != ""){ //Caso não tenha nenhuma operação antes
+                    aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.label);
+                    
+                    $$.traducao = $3.traducao + aux;
                 }
                 else{
-                    cout<<"//else\n";
                     aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $2.traducao, $3.traducao);
                     
                     $$.traducao = $3.traducao + aux;
@@ -593,7 +534,6 @@ INCREMENTAL : TK_ID TK_MENOS TK_MENOS{
 DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
             {
                 string aux = "";
-                cout<<"//DECLARA_E_ATRIBUI::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim;
 
                 for (int i = 0; (i < $2.colLabels.size()) && (i < $4.colLabels.size()); i++){
 
@@ -601,8 +541,6 @@ DECLARA_E_ATRIBUI : TIPO IDs TK_ATRIBUICAO OPs// int a
                     //não será necessário essa parte assim que a partede scopo for criada, 'geraVar' irá inseri a declaração para ser impressa no escopo  qual pertence
                     //aux += "\t"+getVar($2.colLabels[i])->tipo+" "+getVar($2.colLabels[i])->nomeTemp +";\n"; // DECLARA 
                     aux += verificaTipoAtribuicao(getVar($2.colLabels[i])->nomeTemp, $3.traducao, $4.colLabels[i]);
-                    cout<<"\n//DeA:"<<$2.colLabels[i]<<":"<<$4.colLabels[i]<<":"<<$3.label<<":"<<"\n";
-
                 }
 
                 $$.traducao = $4.traducao  + aux;
@@ -615,8 +553,6 @@ TIPO        : TK_TIPO_STRING
             | TK_TIPO_CHAR 
             | TK_TIPO_BOOL 
             | TK_TIPO_INT;
-
-
 
 NUMEROS     :  TK_INT
             {
@@ -640,7 +576,6 @@ NUMEROS     :  TK_INT
             }
             | TK_ID
             {
-                cout<<"//NUMEROS TK_ID:"<<$1.traducao<<"\n";
                 $$.label = getVar($1.traducao)->nomeTemp; //verfica se mome da variavel já foi declarado e retorna nome temporário
                 $$.tipo = getVar($1.traducao)->tipo; //verfica se mome da variavel já foi declarado e retorna tipo
                 $$.traducao = "";
@@ -734,7 +669,6 @@ OPs         : OPs ',' OPERACAO
 **/
 
 CONDICIONAL : INI_ESCOPO_IF IF ELSEs{
-                cout<<"//CONDICIONAL ELSEs::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 $$.traducao = $2.traducao;
                 $$.traducao += "\tgoto " + EscopoAtual->labelFim+";\n"; 
                 $$.traducao += $2.label +":\n";
@@ -743,14 +677,12 @@ CONDICIONAL : INI_ESCOPO_IF IF ELSEs{
 
             } 
             | INI_ESCOPO_IF IF {
-                cout<<"//CONDICIONAL IF::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 $$.traducao = $2.traducao + $2.label + ":\n//fim_if\n\n";
                 fimEscopo();
 
             } 
             ;
 IF          : TK_IF '(' RELACIONAL ')' BLOCO_IF {
-                cout<<"//IF::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 $$.label  = EscopoAtual->labelFim;
 
                 $$.traducao = "\n//ini_if\n" + $3.traducao;
@@ -767,14 +699,12 @@ ELSEs       : ELSE ELSEs
             {
                 $$.label = $1.label + $2.label;
                 $$.traducao = $1.traducao + $2.traducao;
-                cout<<"//ELSEs::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<" -->"<<"\n";
 
             }
             | ELSE 
             ;
 
 ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO_IF {
-                cout<<"//TK_ELIF ELSE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 
                 $$.traducao = "\n//ini_elif\n" +$3.traducao;
@@ -786,7 +716,6 @@ ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO_IF {
 
             }
             | TK_ELSE BLOCO{
-                cout<<"//TK_ELSE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 $$.traducao = "\n//ini_else\n" +$2.traducao ;
                 fimEscopo();
@@ -794,7 +723,6 @@ ELSE        : TK_ELIF '(' RELACIONAL ')' BLOCO_IF {
 
 SWITCHCASE  : SWITCH TK_ABRE INI_ESCOPO CASEs /*FIM_ESCOPO*/ TK_FECHA
             {
-                cout<<"//SWITCHCASE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(profu_escopo)<<" switch_var"<<switch_var<<"\n";
 
                 $$.traducao = $1.traducao + $4.label;
                 $$.traducao += "\ngoto "+EscopoAtual->labelFim +";\n\n";
@@ -806,7 +734,6 @@ SWITCHCASE  : SWITCH TK_ABRE INI_ESCOPO CASEs /*FIM_ESCOPO*/ TK_FECHA
             }
             | SWITCH TK_ABRE INI_ESCOPO CASEs DEFAULT TK_FECHA
             {
-                cout<<"//SWITCHCASEDEFA::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(profu_escopo)<<" switch_var"<<switch_var<<"\n";
 
                 $$.traducao = $1.traducao + $4.label + $5.label;
                 $$.traducao += "\ngoto "+EscopoAtual->labelFim +";\n\n";
@@ -820,7 +747,6 @@ SWITCH      : TK_SWITCH '(' OPERACAO ')'
             {
                 switch_var = $3.label;
                 $$.traducao = $3.traducao;
-                cout<<"//SWITCH::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(nivel_escopo)<<" switch_var"<<switch_var<<"\n";
 
 
             };
@@ -830,7 +756,6 @@ CASEs       : CASE CASEs
 
                 $$.label = $1.label + $2.label;
                 $$.traducao = $1.traducao + $2.traducao;
-                cout<<"//CASEs::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<" -->"<<"\n";
 
             }
             | CASE 
@@ -847,7 +772,6 @@ CASE        : TK_CASE OPERACAO ':' BLOCO
                 $$.traducao += $4.traducao ;
                 $$.traducao += "//fim_case\n\n";
                // $$.traducao += EscopoAtual->labelFim+":\n\n";
-                cout<<"//CASE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
                 fimEscopo();
 
 
@@ -861,7 +785,6 @@ DEFAULT     : TK_DEFAULT ':' BLOCO
                 $$.traducao = EscopoAtual->labelInicio + ":\n";
                 $$.traducao += $3.traducao ;
                 $$.traducao += "//fim_default\n\n";
-                cout<<"//DEFAULT::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 fimEscopo();
 
@@ -869,7 +792,6 @@ DEFAULT     : TK_DEFAULT ':' BLOCO
             };
 
 BREAK       : TK_BREAK  {
-                cout<<"//TK_CONTINUE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 Escopo *e = EscopoAtual->escopoPai;
                 while(e->escopoPai != 0 && e->isCondicional){
@@ -880,7 +802,6 @@ BREAK       : TK_BREAK  {
             };
 
 CONTINUE    : TK_CONTINUE  {
-                cout<<"//TK_CONTINUE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
 
                 Escopo *e = EscopoAtual;
                 while(e->escopoPai != 0 && e->isCondicional){
@@ -895,7 +816,6 @@ CONTINUE    : TK_CONTINUE  {
 **/
 
 LOOP :   TK_WHILE '(' RELACIONAL ')' BLOCO{
-            cout<<"//TK_WHILE::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(nivel_escopo)<<"\n";
 
             pair<string, string> label = geraLabelEscopo();
 
@@ -909,7 +829,6 @@ LOOP :   TK_WHILE '(' RELACIONAL ')' BLOCO{
 
         }
         | INI_ESCOPO TK_FOR '(' ATRIBUICAO ';' RELACIONAL ';' ATRIBUICAO')' BLOCO_SE{
-            cout<<"//TK_FOR::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"_"<< to_string(nivel_escopo)<<"\n";
             
             $$.traducao = "//ini_for\n"+$4.traducao;
             $$.traducao += "\n"+ EscopoAtual->labelInicio + "_l:\n"; 
@@ -936,7 +855,6 @@ LOOP :   TK_WHILE '(' RELACIONAL ')' BLOCO{
         ;
 
         
-
 CMD_CIN     : TK_READ '('TK_ID')'
             {
                  if($3.tipo == "string"){
@@ -960,240 +878,6 @@ CMD_COUT 	: TK_WRITE '(' OPERACAO ')'
 				$$.traducao += "\tcout << " + $3.label + " <<\"\\n\";\n";
 			}
 			;
-
-
-
-/**************
-    FUNÇÃO
-*/
-
-FUNCAO      : ASSINATURA TK_ABRE RETORNO TK_FECHA
-            {
-                cout<<"//FUNCAO1::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
-                cout<<"//FUNCAO1::"<<$2.traducao<<"::\n";
-                Funcao *func = getFunc($1.label);
-                func->traducao = $3.traducao;
-                //func->retornos = getVarByNameTemp($2.colLabels[i]);
-
-                for (int i = 0; i < $3.colLabels.size(); ++i){
-                    cout<<"//FUNCAO1:"<<$3.colLabels[i]<<":\n";
-                    func->retornos.push_back(getLabel($3.colLabels[i]));
-                }
-
-                $$.traducao = "";
-                fimEscopo();
-            }
-            | ASSINATURA TK_ABRE COMANDOS RETORNO TK_FECHA{
-                cout<<"//FUNCAO2::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
-                cout<<"//FUNCAO2::"<<$2.traducao<<"::\n";
-                Funcao *func = getFunc($1.label);
-                func->traducao = $3.traducao + $4.traducao;
-                //func->retornos = getVarByNameTemp($2.colLabels[i]);
-
-                for (int i = 0; i < $4.colLabels.size(); ++i){
-                    cout<<"//FUNCAO2:"<<$4.colLabels[i]<<":\n";
-                    func->retornos.push_back(getLabel($2.colLabels[i]));
-                }
-
-                $$.traducao = "";
-                fimEscopo();
-            }
-            | ASSINATURA_VOID BLOCO
-            {
-                cout<<"//FUNCAO_VOID::"<<EscopoAtual->nivel<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->labelFim<<"\n";
-
-                Funcao *func = getFunc($1.label);
-                func->traducao = $2.traducao;
-
-                $$.traducao = "";
-                fimEscopo();
-            }
-            
-            ;
-
-ASSINATURA : TIPO TK_ID '(' INI_ESCOPO PARAMs ')'
-            {
-                $$.label = $2.traducao;
-                vector<VarNode*> v;
-
-                for (int i = 0; i < $5.colLabels.size(); ++i){
-                    cout<<"//PARANs:"<<$5.colLabels[i]<<":\n";
-                    v.push_back(getLabel($5.colLabels[i]));
-                }
-                Escopo *e = EscopoAtual;
-                EscopoAtual = EscopoAtual->escopoPai;
-                addNewFuncToTable($2.traducao, $2.tipo, v);
-                EscopoAtual = e;
-
-            }
-            | TIPO TK_ID '(' ')'
-            {
-                $$.label = $2.traducao;
-                vector<VarNode*> vazio;
-                addNewFuncToTable($2.traducao, $2.tipo, vazio);
-            };
-ASSINATURA_VOID : TK_VOID TK_ID '(' ')'
-                {
-                    $$.label = $2.traducao;
-                    vector<VarNode*> vazio;
-                    addNewFuncToTable($2.traducao, $2.tipo, vazio);
-
-                };
-
-PARAMs  : PARAMs ',' DECLARA
-            {
-                $1.colLabels.push_back($3.label);
-                $$.colLabels = $1.colLabels;
-
-            }
-            | DECLARA
-            {
-                vector<string> v;
-                $$.colLabels = v;
-                cout<<"//DECLARA::"<<$1.label<<"\n";
-                $$.colLabels.push_back($1.label);
-            };
-
-/*DECLARA_PARAM
-            : TIPO TK_ID // var int a
-            {
-                $$.traducao = " ";
-                $$.label = geraVar($1.tipo, $2.traducao);
-
-            };*/
-
-EXECUTA_FUNCAO  : TK_ID '(' OPs ')'
-                {
-                    cout<<"//EXECUTA_FUNCAO OPs::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
-                    Funcao *func = getFunc($1.traducao);
-                    cout<<"//"<<func->parametros.size()<<":"<<$3.colLabels.size()<<":"<<func->nomeTemp<<":\n";
-                    if(func->parametros.size() != $3.colLabels.size())
-                        yyerror("Funcao '"+$1.traducao+"' espera quantidade de parametros diferentes");
-                    
-                    VarNode *a;
-                    VarNode *b;
-
-                    $$.traducao = $3.traducao;
-                    for (int i = 0; i < $3.colLabels.size(); ++i){
-                        cout<<"//EXECUTA_FUNCAO:"<<$3.colLabels[i]<<":"<<func->parametros[i]->nomeTemp<<":\n";
-                        a = getLabel($3.colLabels[i]);
-                        b = func->parametros[i];
-
-                       // verificaTipoAtribuicao(a->tipo, "=", b->tipo);
-                        if(a->tipo != b->tipo){
-                            yyerror("Parametro na posição "+to_string(i)+" da função '"+$1.traducao+"' é do tipo '"+b->tipo+"' foi passado: '"+a->tipo+"'");
-                        }
-                        $$.traducao += "\t" + func->parametros[i]->nomeTemp + " = " + $3.colLabels[i]+";\n";
-                        /* code */
-                    }
-
-
-                    $$.traducao += "\t"+ func->nomeTemp+"();\n\n";
-                    for (int j = 0; j < func->retornos.size(); j++)
-                    {
-                        $$.colLabels.push_back(func->retornos[j]->nomeTemp);
-                    }
-                    $$.label = $1.traducao;
-                    
-                }
-                | TK_ID '(' ')'
-                {
-                    Funcao *func = getFunc($1.traducao);
-
-                    if(func->parametros.size() != 0)
-                        yyerror("Funcao '"+$1.traducao+"'espera quantidade de parametros diferentes");
-                    
-                    $$.traducao = "\t"+ func->nomeTemp+"();\n\n";
-                    for (int j = 0; j < func->retornos.size(); j++)
-                    {
-                        $$.colLabels.push_back(func->retornos[j]->nomeTemp);
-                    }
-                    $$.label = $1.traducao;
-                }
-
-BLOCO_RTN    : TK_ABRE INI_ESCOPO COMANDOS /*FIM_ESCOPO*/ RETORNO TK_FECHA
-            {
-                cout<<"//BLOCO_RTN::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
-                $$.traducao = $3.traducao;
-                $$.traducao += $4.traducao;
-                $$.colLabels = $4.colLabels;
-            }
-            |TK_ABRE INI_ESCOPO /*FIM_ESCOPO*/ RETORNO TK_FECHA
-            {
-                cout<<"//BLOCO_RTN::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
-                $$.traducao = $3.traducao;
-                $$.colLabels = $4.colLabels;
-            }
-            | INI_ESCOPO RETORNO
-            {
-                cout<<"//BLOCO_RTN::"<<" "<<EscopoAtual->profundidade<<" "<<EscopoAtual->nivel<<"\n";
-
-                $$.traducao = $2.traducao;
-            }
-
-RETORNO     : TK_RETURN RETORNOS ';'
-            {
-                cout<<"//RETORNO:"<<$2.traducao<<"\n";
-
-                $$.traducao  = $2.traducao;
-                $$.colLabels = $2.colLabels;
-
-            }
-
-RETORNOS    : RETORNOS ',' OPERACAO
-            {
-               // cout<<"//RETORNOstr:"<<$1.traducao<<":"<<$3.traducao<<":";
-                cout<<"//RETORNO_OPER:"<<$1.label<<":"<<$3.label<<":\n";
-                 for (int i = 0; i < $1.colLabels.size(); ++i)
-                    {
-                        cout<<"//RETORNO_OPER::"<<$1.colLabels[i]<<"\n";
-                    }
-                    for (int i = 0; i < $3.colLabels.size(); ++i)
-                    {
-                        cout<<"//RETORNO_OPER:::"<<$3.colLabels[i]<<"\n";
-                    }
-                $$.traducao = $1.traducao;
-                $$.traducao += $3.traducao;
-                $$.colLabels = $1.colLabels;
-                
-                if($1.label== "" && $3.colLabels.size() != 0)
-                {
-                    for (int i = 0; i < $1.colLabels.size(); ++i)
-                    {
-                        $$.colLabels.push_back($1.colLabels[i]);            
-                    }
-                }else if ($1.label != "")
-                {
-                    $$.colLabels.push_back($3.label);
-                }
-            
-            }
-            | OPERACAO
-            {
-        
-                vector<string> vazio;
-                $$.colLabels = vazio;
-                
-                
-                $$.traducao = $1.traducao;
-                cout<<"//RETORNOs OPERACAO:"<<$1.label<<":"<<$1.traducao<<"\n";
-
-                if($1.label == "")
-                {
-                    if($1.colLabels.size() > 0)
-                    {   
-                        for (int i = 0; i < $1.colLabels.size(); ++i)
-                        {
-                            $$.colLabels.push_back($1.colLabels[i]);            
-                        }
-                    }
-                }
-                else
-                {
-                    $$.colLabels.push_back($1.label);
-                }
-            }            
-
 %%
 
 
@@ -1234,16 +918,7 @@ string geraVar(string tipo){
 
     return var; 
 }
-string geraFunc(string tipo){
-    string var =("func" + to_string(nivel_escopo) +"_"+ to_string(funcCount++));
 
-    Funcao *func = new Funcao(var, tipo, "");
-
-    //INCLUI EM BLOCO do ESCOPO atual
-    EscopoAtual->funcTempTable[var] = func;
-
-    return var; 
-}
 string geraVarString(atributos *a, int flagCin){
    // std::cout << a->tamString << std::endl;
     //strcpy(dest, src);
@@ -1282,17 +957,6 @@ string geraVar(string tipo, string tkid){
 
     return var; 
 }
-string geraFunc(string tipo, string tkid, vector<VarNode*> params){
-    string var =("func" + to_string(nivel_escopo) +"_"+ to_string(funcCount++));
-
-    Funcao *func = new Funcao(var, tipo, tkid);
-    func->parametros = params;
-    //INCLUI EM BLOCO do ESCOPO atual
-    EscopoAtual->funcTable[var] = func;
-    EscopoAtual->funcTempTable[var] = func;
-
-    return var; 
-}
 
 pair<bool, VarNode*> getVarByNameTemp(string nomeTemp){
     Escopo * e = EscopoAtual;
@@ -1304,24 +968,6 @@ pair<bool, VarNode*> getVarByNameTemp(string nomeTemp){
         if(e->varTable.find(nomeTemp)!=e->varTable.end()){
             rtn.first = true;
             rtn.second = e->varTable[nomeTemp];
-            return rtn;
-        }
-        e = e->escopoPai;
-    }
-    rtn.first = false;
-
-    return rtn;
-}
-pair<bool, Funcao*> getFuncByNameTemp(string nomeTemp){
-    Escopo * e = EscopoAtual;
-    
-    pair<bool, Funcao*> rtn;
-        
-    while(e->escopoPai != 0){
-
-        if(e->funcTempTable.find(nomeTemp)!=e->funcTempTable.end()){
-            rtn.first = true;
-            rtn.second = e->funcTempTable[nomeTemp];
             return rtn;
         }
         e = e->escopoPai;
@@ -1347,23 +993,6 @@ pair<bool, VarNode*> getVarByTkid(string tkid){
 
     return rtn;
 }
-pair<bool, Funcao*> getFuncByTkid(string tkid){
-    Escopo * e = EscopoAtual;
-    //cout<<"//getFuncByTkid::"<<tkid<<"\n";
-    pair<bool, Funcao*> rtn;
-    while(e->escopoPai != 0){
-        //cout<<"//getFuncByTkid::"<<tkid<<"\n";
-        if(e->funcTable.find(tkid)!=e->funcTable.end()){
-            rtn.first = true;
-            rtn.second = e->funcTable[tkid];
-            return rtn;
-        }
-        e = e->escopoPai;
-    }
-    rtn.first = false;
-    //cout<<"//getFuncByTkid::"<<tkid<<":OUT\n";
-    return rtn;
-}
 
 void addNewVarToTable(string nomeTemp, string tipo){
  
@@ -1381,22 +1010,6 @@ void addNewVarToTable(string nomeTemp, string tipo){
     }
 }
 
-void addNewFuncToTable(string nomeTemp, string tipo, vector<VarNode*> params){
- 
-    if(EscopoAtual->funcTable.find(nomeTemp)==EscopoAtual->funcTable.end()){
-        //verifica se variavel existe noescopo atual
-        EscopoAtual->funcTable[nomeTemp] = EscopoAtual->funcTempTable[geraFunc(tipo, nomeTemp, params)];
-    }else{
-        //verifica se a nova variavel está na tabela
-        pair<bool, Funcao*> p = getFuncByTkid(nomeTemp);
-        if(p.first){
-            //ALTERAR PARA PERMITIR FUNÇÕES COM DIFERENTES PARAMETROS
-            yyerror("error: redeclaração da função '"+tipo+" "+nomeTemp+ "'\n");
-        }else{
-            EscopoAtual->funcTable[nomeTemp] = EscopoAtual->funcTempTable[geraFunc(tipo, nomeTemp, params)];
-        }
-    }
-}
 
 //busca variavel por tkid
 VarNode* getVar(string nomeTemp){
@@ -1415,24 +1028,6 @@ VarNode* getLabel(string label){
     }
 
     return p.second;
-}
-Funcao* getFunc(string nomeTemp){
-    pair<bool, Funcao*> p = getFuncByTkid(nomeTemp);
-    if(!p.first){
-        yyerror("error: funcao não foi declarada '"+nomeTemp+ "'\n");
-    }
-
-    return p.second;
-}
-//busca função por label
-Funcao* getFuncLabel(string label){
-    pair<bool, Funcao*> p = getFuncByNameTemp(label);
-    if(!p.first){
-        yyerror("error: funcao temporária inexistente '"+label+ "'\n");
-    }
-
-    return p.second;
-  
 }
 
 string verificaTipo(atributos *a, atributos *b,string operador, atributos *c){
@@ -1541,51 +1136,6 @@ string verificaTipoAtribuicao(string label1, string operador, string label2){
     }
     return rtn;
 }
-string verificaTipoAtribuicao_func(string label1, string operador, string label2, string labelFunc){
-    VarNode *a = getLabel(label1);
-    VarNode *b;
-
-    std::size_t found = labelFunc.find("var");
-    if (found!=std::string::npos){
-        b = getLabel(labelFunc);
-    }else{
-        Funcao *f = getFunc(labelFunc);
-        
-        for (int i = 0; i < f->retornos.size(); ++i){
-            if(f->retornos[i]->nomeTemp == label2){
-                b = f->retornos[i];
-                break;
-            }
-        }   
-    }
-
-    string tipo = buscaTipoTabela(a->tipo, operador, b->tipo);
-    //std::cout << "tipo: " <<tipo << std::endl;
-    string var = "", rtn = "";
-
-    if(b->tipo != tipo) {
-        var = geraVar(tipo);
-        //rtn += "\t" + tipo + " " + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
-        rtn += "\t" + var +" = " + "("+ tipo +") "+ b->nomeTemp +";\n";
-        rtn += "\t" + a->nomeTemp +" = " + var + ";\n";
-    } 
-    else{
-         //rtn += "\t" + tipo + " " + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
-         if(a->tipo == "string") //caso seja string é necessário utilizar o strcpy;
-         { 
-             geraVarSubrescritaString(a->nomeTemp, b->nomeTemp);
-             rtn += "\tstrcpy (" + a->nomeTemp + "," + b->nomeTemp  + ");\n";
-         }
-         else
-         {
-             rtn += "\t" + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
-         }
-         
-
-    }
-    return rtn;
-}
-
 
 // string AtribuicaoEntradaCin(string label1){
 //     VarNode *a = getLabel(label1);
@@ -1638,7 +1188,7 @@ string buscaTipoTabela(string tipoA, string operador, string tipoB){
     string busca = tipoA+operador+tipoB;
     string retorno  = TabelaTipos.find(busca)->second;
     if(retorno == "ERRO")
-        yyerror("Erro de inferencia de tipo, não é possivel executar a operação comos dados tipos: '"+tipoA+"' '"+operador+"'' '"+tipoB+"'");
+        yyerror("ERRO");
     
     //TabelaTipos[busca]
     return retorno;
@@ -1650,7 +1200,6 @@ void iniEscopoIf(){
 void iniEscopo(){
         
     nivel_escopo++;
-	cout<<"//iniEscopo:"<<to_string(nivel_escopo)<<" "<<to_string(profu_escopo)<<"\n";
 
     Escopo *e = new Escopo(nivel_escopo);
 
@@ -1669,11 +1218,10 @@ void iniEscopo(){
 
 }
 void fimEscopo(){
-	cout<<"//fimEscopo:"<<to_string(nivel_escopo)<<" "<<to_string(EscopoAtual->profundidade)<<"\n";
     nivel_escopo--;
     EscopoAtual = EscopoAtual->escopoPai;
 }
-void printVarDeclarations(Escopo *esc){
+void printDeclarations(Escopo *esc){
     string temp = "";
 
     for (int i = 0; i< esc->list_escopo.size(); ++i){
@@ -1688,33 +1236,17 @@ void printVarDeclarations(Escopo *esc){
                     + "; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
         }
         cout<<temp;
-        printVarDeclarations(esc->list_escopo[i]);
+        printDeclarations(esc->list_escopo[i]);
         
     }
 
 
 }
-void printVarDeclarations(){
-    printVarDeclarations(EscopoGlobal);
+void printDeclarations(){
+    
+    printDeclarations(EscopoGlobal);
+   
 }
-void printFuncDeclarations(Escopo *esc){
-    string temp = "";
-
-    for (int i = 0; i< esc->list_escopo.size(); ++i){
-        temp="";
-
-        for( MapFuncao::const_iterator it = esc->list_escopo[i]->funcTempTable.begin(); it != esc->list_escopo[i]->funcTempTable.end(); ++it ){
-            temp += "\tvoid " + it->second->nomeTemp + "(); //função: "+it->second->tkid +"\n";
-        }
-        cout<<temp;
-        printFuncDeclarations(esc->list_escopo[i]);
-        
-    }
-}
-void printFuncDeclarations(){
-    printFuncDeclarations(EscopoGlobal);
-}
-
 
 pair<string,string> geraLabelEscopo(){
     pair<string, string> r;
@@ -1726,20 +1258,6 @@ pair<string,string> geraLabelEscopo(){
 string getLabelEscopoFim(){
     return EscopoAtual->labelFim;
 }
-void printFuncoes(Escopo *esc){
-     string temp = "";
-
-    for (int i = 0; i< esc->list_escopo.size(); ++i){
-        for( MapFuncao::const_iterator it = esc->list_escopo[i]->funcTempTable.begin(); it != esc->list_escopo[i]->funcTempTable.end(); ++it ){
-           
-                cout <<"void "<< it->second->nomeTemp << "()\n";
-                cout <<"{\n" << it->second->traducao << "\n}\n"; 
-        }
-        printFuncoes(esc->list_escopo[i]);
-    }
-}
-void printFuncoes(){
-    printFuncoes(EscopoGlobal);
 
 
 void PegaDimensoesMatrizOriginal(string nomeTKid){ //pegar dimensões da matriz original e guarda no vector global dimensaoMatrizOriginal do ultimo elemento para o primeiro
