@@ -22,7 +22,10 @@ struct atributos
     string traducao;
     string tipo;
     string nomeTemp;
+    int valor;
     vector<string> colLabels;
+    vector<int> dimensao;
+    vector<string> dimensaoString;
     
 };
 
@@ -32,6 +35,8 @@ class VarNode{
         string nomeTemp; //Var0, Var2;
         string tipo;
         int tamString;
+        int tamVetor;
+        vector<int> dimensoes;
         VarNode(string , string, string, int);
 };
 VarNode::VarNode(string a, string b, string c, int d = 0){
@@ -39,6 +44,7 @@ VarNode::VarNode(string a, string b, string c, int d = 0){
     tipo = b;
     nomeTKid = c;
     tamString = d;
+    tamVetor = 0;
 };
 class Funcao{
     public:
@@ -79,6 +85,8 @@ class Escopo{
         Escopo(int, int);
 
 };
+
+
 Escopo::Escopo(int n){
     nivel = n;
 };
@@ -125,7 +133,7 @@ string verificaTipoAtribuicao(string label1, string operador, string label2);
 string verificaTipoAtribuicao_func(string label1, string operador, string label2, string labelFunc);
 string buscaTipoTabela(string tipoA, string operador, string tipoB);
 string verificaTipoLogico(atributos *a, atributos *b,string operador, atributos *c);
-string geraVarString(atributos *a);
+string geraVarString(atributos *a, int flagCin);
 string geraVarSubrescritaString(string a, string b);
 
 string to_string(int i);
@@ -135,6 +143,8 @@ string geraVar(string tipo, string tkid);
 string geraFunc(string tipo);
 string geraFunc(string tipo, string tkid, vector<VarNode*> params);
 string decl = "";
+
+
 
 //busca variaveis dentro do escopo
 pair<bool, VarNode*> varByTkid(string tkid);
@@ -147,7 +157,19 @@ void printFuncDeclarations();
 void printVarDeclarations();
 void printFuncoes();
 
+//Matrizes
+int auxVetor = 0;
+vector<int> dimensaoMatrizOriginal;
+vector<string> indexProcuradoMatriz;
+void PegaDimensoesMatrizOriginal(string nomeTKid);
+void PegaDimensaoIndexTemporario(atributos *a);
+string CalculaIndexMatriz();
+void ResetMatriz();
+string retornoTraducao;
+
 pair<string,string> geraLabelEscopo();
+VarNode* getVar(string nomeTemp);
+VarNode* getLabel(string label);
 
 int yylex(void);
 void yyerror(string);
@@ -158,7 +180,7 @@ void yyerror(string);
 //Operacoes logica
 %token TK_AND TK_OR
 //Operacores relacionais
-%token TK_MAIOR TK_MENOR TK_DIFERENTE TK_IGUAL
+%token TK_MAIOR TK_MENOR TK_DIFERENTE TK_IGUAL TK_MAIOR_IGUAL TK_MENOR_IGUAL
 //ATRIBUICAO
 %token TK_ATRIBUICAO TK_VAR TK_GLOBAL
 //TIPOS
@@ -275,23 +297,13 @@ COMANDO     : OPERACAO ';'
             | BREAK ';'
             | FUNCAO
             | SWITCHCASE
-/*          
 
-            | CONDICIONAL_ELSE
-            | SUPERBREAK ';'
-            | SUPERCONTINUE ';'
-*/
 
-            ;
-/*BLOCO_ : BLOCO {
-                $$.traducao = $1.traducao;
-                fimEscopo();
-            };*/
 OPERACAO    : ARITMETICO
             | LOGICO
             | RELACIONAL
+            | CONCATENACAO
             | EXECUTA_FUNCAO
-//          | CONCATENACAO
             ;
             
 ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
@@ -304,7 +316,8 @@ ARITMETICO  : ARITMETICO OP_ARITMETICO ARITMETICO
             |ARITMETICO2
             | '('ARITMETICO')' {
 
-                $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;}
+                $$.traducao = $2.traducao; $$.label = $2.label; $$.tipo = $2.tipo;
+            }
             //|NUMEROS 
             //|TK_ID
             | EXECUTA_FUNCAO{
@@ -368,11 +381,11 @@ LOGs 		: LOGICO | RELACIONAL ;
             
 
 
-//OP_CONCAT         : TK_CONCAT;
+OP_CONCAT         : TK_CONCAT;
 
 OP_LOGICO       : TK_AND | TK_OR ;
 
-OP_RELACIONAL   : TK_DIFERENTE | TK_IGUAL | TK_MENOR | TK_MAIOR ;
+OP_RELACIONAL   : TK_DIFERENTE | TK_IGUAL | TK_MENOR | TK_MAIOR | TK_MAIOR_IGUAL | TK_MENOR_IGUAL;
 
 OP_ARITMETICO   : TK_MAIS 
                 | TK_MENOS 
@@ -397,8 +410,70 @@ DECLARA     : TIPO TK_ID // int a
 
                 
             }
+            |DECLARA_VETOR
             ;
 
+//DECLARACAO DE VETOR
+DECLARA_VETOR
+ 			:TIPO TK_ID DIMENCAO 
+ 			{
+ 			    addNewVarToTable($2.traducao, $2.tipo);
+ 			    
+ 			    $$.traducao = "";//$3.traducao;
+ 			    
+ 			    VarNode *a = getVar($2.traducao);
+ 			    
+ 			    
+ 			    for (int i = 0 ; i < $3.dimensao.size(); i++)
+				{
+				   if(i == 0){
+				        a->tamVetor = $3.dimensao[i];
+				   }else{
+				        a->tamVetor = a->tamVetor * $3.dimensao[i];
+				   }
+				  
+				   //std::cout << $3.dimensao[i] << std::endl; 
+				   a->dimensoes.push_back($3.dimensao[i]);
+				}
+ 			    
+ 		
+ 			}
+ 			;
+//Auxilia na declaração do vetor
+DIMENCAO 	: '['NUMEROS']'
+			{
+			    if ($2.tipo	== "int")
+ 			 	{
+ 			 		$$.traducao = $2.traducao;
+ 			 		//std::cout << $2.valor << std::endl;
+ 			 	    
+ 			 		
+ 			 		$$.dimensao.push_back($2.valor);
+ 			 	
+ 			// 		$$.label = $2.label;
+ 			 	}
+ 			 	else
+ 			 	{
+ 			 		yyerror("Esse tipo não é aceito para um vetor");
+ 			 	}
+ 			
+			}	
+			| DIMENCAO DIMENCAO
+			{
+			    $$.traducao = $1.traducao + $2.traducao;
+			    //$$.label = 
+				// $$.label = nova_temp_var("int");
+				// $$.traducao = $1.traducao; 
+				// $$.traducao += $2.traducao + "\t"+ $$.label +" = "+ $1.label +" * " + $2.label+";\n" ;
+
+			
+				 for (int i = 0 ; i < $2.dimensao.size(); i++)
+				 {
+				 	$1.dimensao.push_back($2.dimensao[i]);
+				 }
+				 $$.dimensao = $1.dimensao;
+			}
+			;
 
 /**
     ATRIBUIÇÕES
@@ -437,7 +512,69 @@ ATRIBUICAO  : TK_ID TK_ATRIBUICAO OPERACAO{
             }
             |DECLARA_E_ATRIBUI
             |INCREMENTAL
+            |ATRIB_VETOR
             ;
+            
+ATRIB_VETOR : TK_ID INDEX TK_ATRIBUICAO OPERACAO
+			{
+			
+                //$$.traducao = $3.traducao + "\t"+ $1.label + " "+ $2.label + " " +$3.label + "\n";
+                // if($3.label != ""){ //Caso não tenha nenhuma operação antes
+                //     aux = verificaTipoAtribuicao(getVar($1.traducao)->nomeTemp, $3.traducao, $4.label);
+                    
+                //     $$.traducao = $4.traducao + aux;
+                // }
+                // else{
+                    string index = "";
+				    
+				    PegaDimensoesMatrizOriginal($1.traducao);
+                    PegaDimensaoIndexTemporario(&$2);
+                      
+                    
+				    index = CalculaIndexMatriz(); //Calcula o indice da matriz no codigo de 3 endereços
+				    
+				    
+                   
+                    $$.traducao = $2.traducao + $4.traducao  + retornoTraducao +
+                    "\t"+getVar($1.traducao)->nomeTemp + "[" + index + "]" + " = " + $4.label + ";\n ";
+                    ResetMatriz(); //Reseta os vectors das matrizes
+                    
+                // }
+			}
+			;
+			
+INDEX 	: '['NUMEROS']'
+			{
+			    
+			    if ($2.tipo	== "int")
+ 			  	{
+ 			  	    std::cout << $2.nomeTemp << std::endl;
+     			  	$$.dimensaoString.push_back($2.label);
+    			    //auxVetor = auxVetor *  $2.valor;
+    			    $$.traducao = $2.traducao;
+ 			   }
+ 			   else
+ 			   {
+ 			 		yyerror("Esse tipo não é aceito como index de um vetor");
+ 		       }
+ 			
+			}	
+			| INDEX INDEX
+			{
+			    $$.traducao = $1.traducao + $2.traducao;
+			    //$$.label = 
+				// $$.label = nova_temp_var("int");
+				// $$.traducao = $1.traducao; 
+				// $$.traducao += $2.traducao + "\t"+ $$.label +" = "+ $1.label +" * " + $2.label+";\n" ;
+
+			
+				  for (int i = 0 ; i < $2.dimensaoString.size(); i++)
+				  {
+				  	$1.dimensaoString.push_back($2.dimensaoString[i]);
+				  }
+				  $$.dimensaoString = $1.dimensaoString;
+			}
+			;
 
 INCREMENTAL : TK_ID TK_MENOS TK_MENOS{
                 VarNode *var = getVar($1.traducao); 
@@ -484,8 +621,10 @@ TIPO        : TK_TIPO_STRING
 NUMEROS     :  TK_INT
             {
                 $$.label = geraVar($1.tipo);
-                //$$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";    
+                //$$.traducao = "\t" + $1.tipo +" "+ $$.label +" = " + $1.traducao + ";\n";
+                $$.valor = atoi($1.traducao.c_str()); //pega o valor para utilizar no vetor
                 $$.traducao = "\t" + $$.label +" = " + $1.traducao + ";\n";    
+                
             }
             | TK_CHAR
             {
@@ -510,7 +649,7 @@ NUMEROS     :  TK_INT
             | TK_STRING
 			{
 			    //$1.tamString = $$.traducao.length()-1; //Pega o tamanho da string menos 1;
-			    $$.label = geraVarString(&$1);
+			    $$.label = geraVarString(&$1, 0); // 0 pois não é do cin
 			    //std::cout << "Teste: " << $1.traducao << $$.label << std::endl;
 			    $$.traducao = "\tstrcpy (" + $$.label + "," + $1.traducao + ");\n";
 			    
@@ -523,6 +662,29 @@ NUMEROS     :  TK_INT
 						
 			}
             ;
+            
+CONCATENACAO: CONCATENACAO OP_CONCAT CONCATENACAO
+			{
+			    string aux = "";
+			    VarNode *a = getLabel($1.label);
+			    VarNode *b = getLabel($3.label);
+			    
+			    $$.label = geraVarString(&$1, 0); // 0 pois não é do cin
+			    aux  = "\n\tstrcpy("+$$.label+",\"\");";
+			    
+			    VarNode *c = getLabel($$.label);
+			    
+			    if($1.tipo == "string" & $3.tipo == "string"){
+			        
+                    c->tamString = a->tamString + b->tamString;
+                    
+			        $$.traducao = aux + $1.traducao + $3.traducao +"\n\tstrcat("+$$.label+","+$1.label+");\n\tstrcat("+$$.label+","+$3.label+");\n"; 
+			    }else{
+			       	yyerror("Concatenação permitida apenas com strings");
+			    }
+			}
+			|NUMEROS 
+			;
 
 /**
     ATRIBUIÇÃO MULTIPLA e PARAMETORS FUNÇÂO
@@ -774,45 +936,20 @@ LOOP :   TK_WHILE '(' RELACIONAL ')' BLOCO{
         ;
 
         
-CMD_CIN     :  TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ 
-            {
 
-
-                // if($2.tipoReal == "string"){
-                //  nova_var_string($3.label, 0);
-            //      resetaString($3.label, 1024);
-            //      variavel var = use_var($3.label, $3.tipo);
-                //  $$.traducao = "\t cin >> " + var.temp_name + " ;\n";
-                // }
-                // else
-                // {
-            //      $$.label = nova_var($3.label, $2.tipo);
-                //  $$.traducao = "\t cin >> " + $$.label + " ;\n";
-                // }
-            }
-            | TK_GLOBAL TK_VAR TIPO TK_ID TK_ATRIBUICAO TK_READ// global var int a;
+CMD_CIN     : TK_READ '('TK_ID')'
             {
-                // if($3.tipoReal == "string"){
-                //  nova_var_string($4.label, 0);
-            //      resetaString($4.label, 1024);
-            //      variavel var = use_var($4.label, $4.tipo);
-                //  $$.traducao = "\tcin >> " + var.temp_name + " ;\n"; 
-                // }else
-                // {
-            //      $$.label = nova_var($4.label, $3.tipo);
-                //  $$.traducao = "\tcin >> " + $$.label + " ;\n";
-                // }
-            }
-            | TK_READ '('TK_ID')'
-            {
-                // if($3.tipoReal == "string"){
-            //      resetaString($3.label, 1024);
-            //      variavel var = use_var($3.label, $3.tipo);
-                //  $$.traducao = "\t cin << " + var.temp_name + " ;\n";    
-                // }
-                // else{
-                //  $$.traducao = "\t cin << " + $3.label + " ;\n"; 
-                // }
+                 if($3.tipo == "string"){
+                    $$.label = geraVarString(&$1, 1);
+                    VarNode *a = getVar($3.traducao);
+                    a->tamString = 1024;
+                    
+    			    $$.traducao = "\tcin >> " + $$.label  + " ;\n\tstrcpy (" + a->nomeTemp + "," + $$.label + ");\n";
+                 }
+                 else{
+                     
+                  $$.traducao = "\tcin >> " + getVar($3.traducao)->nomeTemp + " ;\n"; //getVar verifica se a variavel foi declarada
+                 }
             }
             ;
 
@@ -1067,9 +1204,6 @@ int yyparse();
 int main( int argc, char* argv[] )
 {   
    
-	 char var0_0[6]; 
-
-	strcpy (var0_0,"teste");
 
     yyparse();
     //for (map<string,VarNode*>::iterator it=tkIdTable.begin(); it!=tkIdTable.end(); ++it)
@@ -1110,14 +1244,20 @@ string geraFunc(string tipo){
 
     return var; 
 }
-string geraVarString(atributos *a){
+string geraVarString(atributos *a, int flagCin){
    // std::cout << a->tamString << std::endl;
     //strcpy(dest, src);
     int tamString;
     
     string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++) );
-    tamString = a->traducao.length()-1; //Pega o tamanho da string menos 1;
-    std::cout <<  tamString << std::endl;
+    if(flagCin == 1){ //Se a string veio de um cin 
+        tamString = 1024;
+    }
+    else{
+        tamString = a->traducao.length()-1; //Pega o tamanho da string menos 1;
+    }
+    
+    //std::cout <<  tamString << std::endl;
     //string varTamVetor = var + "[" + to_string(a->tamString) + "]";
 
     VarNode *varnode = new VarNode(var, "string", "", tamString);
@@ -1153,6 +1293,7 @@ string geraFunc(string tipo, string tkid, vector<VarNode*> params){
 
     return var; 
 }
+
 pair<bool, VarNode*> getVarByNameTemp(string nomeTemp){
     Escopo * e = EscopoAtual;
     
@@ -1223,6 +1364,7 @@ pair<bool, Funcao*> getFuncByTkid(string tkid){
     //cout<<"//getFuncByTkid::"<<tkid<<":OUT\n";
     return rtn;
 }
+
 void addNewVarToTable(string nomeTemp, string tipo){
  
     if(EscopoAtual->tkIdTable.find(nomeTemp)==EscopoAtual->tkIdTable.end()){
@@ -1238,6 +1380,7 @@ void addNewVarToTable(string nomeTemp, string tipo){
         }
     }
 }
+
 void addNewFuncToTable(string nomeTemp, string tipo, vector<VarNode*> params){
  
     if(EscopoAtual->funcTable.find(nomeTemp)==EscopoAtual->funcTable.end()){
@@ -1254,6 +1397,7 @@ void addNewFuncToTable(string nomeTemp, string tipo, vector<VarNode*> params){
         }
     }
 }
+
 //busca variavel por tkid
 VarNode* getVar(string nomeTemp){
     pair<bool, VarNode*> p = getVarByTkid(nomeTemp);
@@ -1271,7 +1415,6 @@ VarNode* getLabel(string label){
     }
 
     return p.second;
-  
 }
 Funcao* getFunc(string nomeTemp){
     pair<bool, Funcao*> p = getFuncByTkid(nomeTemp);
@@ -1444,6 +1587,28 @@ string verificaTipoAtribuicao_func(string label1, string operador, string label2
 }
 
 
+// string AtribuicaoEntradaCin(string label1){
+//     VarNode *a = getLabel(label1);
+   
+   
+//     string var = "", rtn = "";
+    
+    
+//     if(a->tipo == "string") //caso seja string é necessário utilizar o strcpy;
+//     { 
+//         geraVarSubrescritaString(a->nomeTemp, b->nomeTemp);
+//         rtn += "\tstrcpy (" + a->nomeTemp + "," + b->nomeTemp  + ");\n";
+//     }
+//     else
+//     {
+//         rtn += "\t" + a->nomeTemp +" = " + b->nomeTemp  + ";\n";
+//     }
+         
+
+//     }
+//     return rtn;
+// }
+
 string geraVarSubrescritaString(string varA, string varB){
     VarNode *a = getLabel(varA);
     VarNode *b = getLabel(varB);
@@ -1451,8 +1616,8 @@ string geraVarSubrescritaString(string varA, string varB){
     int tamString = b->tamString; //Pega o tamanho da string menos 1;
      
     //std::cout << b->tamString << std::endl;
-    string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++) );
-    string varTamVetor = var + "[" + to_string(tamString) + "]";
+    //string var =("var" + to_string(nivel_escopo) +"_"+ to_string(varCount++) );
+    //string varTamVetor = var + "[" + to_string(tamString) + "]";
     a->tamString = tamString;
     
     //a->nomeTemp = var;
@@ -1462,7 +1627,7 @@ string geraVarSubrescritaString(string varA, string varB){
     //INCLUI EM BLOCO do ESCOPO atual
     //EscopoAtual->labelTable[var] = varnode;
 
-    return "sas"; 
+    return "nada"; 
 }
 
 //busca na tabela tipo resultante de uma operação
@@ -1519,6 +1684,7 @@ void printVarDeclarations(Escopo *esc){
                     + (it->second->tipo != "string" ? it->second->tipo : "char") +" " //Se tipo for string é necessário transformar para char na declaração
                     + it->second->nomeTemp
                     + (it->second->tamString > 0 ? "[" + to_string(it->second->tamString) + "]" : "") //verifica se é string, se for define o tamanho
+                    + (it->second->tamVetor > 0 ? "[" + to_string(it->second->tamVetor) + "]" : "") //verifica se é vetor, se for define o tamanho
                     + "; "+(it->second->nomeTKid == "" ? "" : " //variavel: "+it->second->nomeTKid) +"\n";
         }
         cout<<temp;
@@ -1574,4 +1740,79 @@ void printFuncoes(Escopo *esc){
 }
 void printFuncoes(){
     printFuncoes(EscopoGlobal);
+
+
+void PegaDimensoesMatrizOriginal(string nomeTKid){ //pegar dimensões da matriz original e guarda no vector global dimensaoMatrizOriginal do ultimo elemento para o primeiro
+
+    VarNode *a = getVar(nomeTKid);
+    for (int i = a->dimensoes.size()-1 ; i >= 0; i--)
+    {
+        //index = $2.dimensao[i]-1 *  
+        dimensaoMatrizOriginal.push_back(a->dimensoes[i]);
+        //std::cout << "dimensoes " << a->dimensoes[i] << std::endl;
+ 	    //$1.dimensao.push_back($2.dimensao[i]);
+    }
+}
+
+
+void PegaDimensaoIndexTemporario(atributos *a){
+    //pegar dimensão do index da matriz que está sendo inserido
+    for (int i = 0 ; i < a->dimensaoString.size(); i++)
+    {
+        string var = geraVar("int");
+        
+        //index = $2.dimensao[i]-1 *  
+        //std::cout << "index " << a->dimensaoString[i] << std::endl;
+        
+        indexProcuradoMatriz.push_back(a->dimensaoString[i]);
+        //$1.dimensao.push_back($2.dimensao[i]);
+    }
+}
+
+// int CalculaIndexMatriz(){
+//     int index = 0;
+    
+    
+//     for (int i = 0 ; i < dimensaoMatrizOriginal.size()-1; i++){ //Faz o calculo da posição do index
+//         std::cout << "index: " << indexProcuradoMatriz[i] << " coluna: " << dimensaoMatrizOriginal[i] << std::endl;
+//         index += indexProcuradoMatriz[i]*dimensaoMatrizOriginal[i];
+//         std::cout << "dim" << indexProcuradoMatriz[i]*dimensaoMatrizOriginal[i]  << std::endl;
+//     }
+//     index = index + indexProcuradoMatriz.back(); //Adiciona a coluna final ao calculo
+//     std::cout <<  "indexProcuradoMatriz " << indexProcuradoMatriz.back() << std::endl;
+    
+    
+//     std::cout << "Final " << index << std::endl;
+    
+//     return index;
+// }
+
+string CalculaIndexMatriz(){
+    string var = geraVar("int");
+    string index = "\t" + var + " = 0;\n";
+    
+    
+    //std::cout << "var" << var << std::endl;
+    
+    for (int i = 0 ; i < dimensaoMatrizOriginal.size()-1; i++){ //Faz o calculo da posição do index
+         //std::cout << "index: " << indexProcuradoMatriz[i] << " coluna: " << dimensaoMatrizOriginal[i] << std::endl;
+         index += "\t" + var + " = "  + var +  " + " + indexProcuradoMatriz[i] + ";\n";
+         index += "\t" + var + " = " + var + " * " + to_string(dimensaoMatrizOriginal[i]) + ";\n";
+        
+    //     std::cout << "dim" << indexProcuradoMatriz[i]*dimensaoMatrizOriginal[i]  << std::endl;
+    }
+     index +=  "\t" + var + " = " + var + " + " + indexProcuradoMatriz.back() + ";\n";; //Adiciona a coluna final ao calculo
+     retornoTraducao = index;
+     
+    // std::cout << index << std::endl;
+    // std::cout <<  "indexProcuradoMatriz " << indexProcuradoMatriz.back() << std::endl;
+    // std::cout << "Final " << index << std::endl;
+    
+     return var;
+}
+
+void ResetMatriz(){
+    dimensaoMatrizOriginal.clear();
+    indexProcuradoMatriz.clear();
+    retornoTraducao = "";
 }

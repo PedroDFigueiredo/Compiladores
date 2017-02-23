@@ -1,93 +1,44 @@
-//iniEscopo:1 1
-
-
-//DECLARA_E_ATRIBUI::1 1 FIM_1 i
-
-
-
-//iniEscopo:2 2
-
-
-//iniEscopo:3 3
-
-//iniEscopo:4 4
-//TK_CONTINUE::4 4 FIM_4
-//BLOCO:: 4 4
-//IF::4 4 FIM_4
-//fimEscopo:4 4
-
-//CONDICIONAL IF::3 3 FIM_3
-//fimEscopo:3 3
-
-
-//BLOCO
-//fimEscopo:2 2
-
-
-//iniEscopo:2 5
-//DECLARA_E_ATRIBUI::2 5 FIM_5 i
-
-//iniEscopo:3 6
-
-//iniEscopo:4 7
-//TK_CONTINUE::4 7 FIM_7
-//BLOCO:: 7 4
-//IF::4 7 FIM_7
-//fimEscopo:4 7
-
-
-//CONDICIONAL IF::3 6 FIM_6
-//fimEscopo:3 6
-
-
-//BLOCO_SE
-//TK_FOR::2 5 FIM_5_2
-//fimEscopo:2 5
-
-
-//iniEscopo:2 8
-//DECLARA_E_ATRIBUI::2 8 FIM_8 j
-
-//iniEscopo:3 9
-//DECLARA_E_ATRIBUI::3 9 FIM_9 k
-
-//iniEscopo:4 10
-//iniEscopo:5 11
-//TK_CONTINUE::5 11 FIM_11
-//BLOCO:: 11 5
-//IF::5 11 FIM_11
-//fimEscopo:5 11
-
-//CONDICIONAL IF::4 10 FIM_10
-//fimEscopo:4 10
-
-
-//BLOCO_SE
-//TK_FOR::3 9 FIM_9_3
-//fimEscopo:3 9
-//BLOCO_SE:: 8 2
-//TK_FOR::2 8 FIM_8_2
-//fimEscopo:2 8
-
-
-
-
-//iniEscopo:2 12
-
-
-
-
-
-//BLOCO
-//TK_WHILE::2 12 FIM_12_2
-//fimEscopo:2 12
 
 
 
 
 
 
-//BLOCO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*Compilador FOCA*/
 #include <iostream>
 #include<string.h>

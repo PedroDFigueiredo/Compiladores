@@ -2,6 +2,6 @@ int main(){
 
 	string a = "";
 
-	a = "caceta";
+	a = "adas";
 
 }

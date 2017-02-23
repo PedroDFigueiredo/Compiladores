@@ -1,58 +1,31 @@
-//iniEscopo:1 1
-
-//DECLARA_E_ATRIBUI::1 1 FIM_1 a
-
-//DECLARA_E_ATRIBUI::1 1 FIM_1 b
 
 
 
 
 
 
-//SWITCH::1 1 FIM_1_1 switch_varvar1_3
-//iniEscopo:2 2
-
-
-//iniEscopo:3 3
-//BLOCO:: 3 3
-//CASE::3 3 FIM_3
-//fimEscopo:3 3
-
-
-//iniEscopo:3 4
-
-
-//BLOCO
-//CASE::3 4 FIM_4
-//fimEscopo:3 4
-
-
-//iniEscopo:3 5
-
-
-//TK_CONTINUE::3 5 FIM_5
-
-
-//BLOCO
-//CASE::3 5 FIM_5
-//fimEscopo:3 5
-
-//CASEs::2 2 FIM_2 -->
-//CASEs::2 2 FIM_2 -->
-
-//iniEscopo:3 6
-//BLOCO:: 6 3
-//DEFAULT::3 6 FIM_6
-//fimEscopo:3 6
-
-//SWITCHCASEDEFA::2 2 FIM_2_7 switch_varvar1_3
-//fimEscopo:2 2
 
 
 
 
 
-//BLOCO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*Compilador FOCA*/
 #include <iostream>
 #include<string.h>
@@ -76,6 +49,7 @@ int main(void)
 	var1_0 = 0;
 	var1_1 = var1_0;
 	var1_2 = 2;
+	var1_2 = 1;
 	var1_3 = var1_2;
 
 //ini_case
